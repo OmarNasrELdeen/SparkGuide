@@ -1,482 +1,340 @@
-# Spark ETL Optimization Guide
+# Comprehensive Spark ETL Testing Framework
 
-This comprehensive collection of Spark modules demonstrates advanced ETL techniques, performance optimization strategies, and best practices for large-scale data processing. Each module focuses on specific Spark functionalities to help you build efficient, scalable ETL pipelines.
+A streamlined, comprehensive testing framework for Apache Spark ETL operations with advanced performance analysis, SQL Server integration, and staging-to-curated data workflows.
 
-## 📁 Module Overview
+## 🎯 **Framework Overview**
 
-### Core Connection & Data Integration
-- **`spark_sql_connection.py`** - Universal JDBC connectivity with multi-database support and advanced partitioning
-- **`spark_advanced_writing_strategies.py`** - Optimized writing patterns for bucketed, partitioned, and initial load scenarios
-- **`spark_query_optimization.py`** - Advanced query optimization and Cost-Based Optimization (CBO)
+This framework provides complete testing coverage for Spark ETL operations including:
+- **12 Spark Classes** with **70+ functions** tested across multiple configurations
+- **Performance analysis** with 6 different Spark configurations
+- **Staging-to-curated ETL workflows** with data quality validation
+- **SQL Server integration** with bulk operations and performance benchmarking
+- **Realistic dataset generation** with configurable data quality issues
 
-### Performance & Resource Optimization
-- **`spark_parallelism_optimization.py`** - Parallelism strategies and performance tuning
-- **`spark_partitioning_strategies.py`** - Data partitioning and repartitioning techniques
-- **`spark_memory_optimization.py`** - Memory management and garbage collection optimization
+## 📁 **Project Structure (Streamlined)**
 
-### Data Processing & Transformations
-- **`spark_grouping_strategies.py`** - Grouping and aggregation optimization patterns
-- **`spark_advanced_transformations.py`** - Complex data transformations and data quality checks
-- **`spark_file_formats.py`** - File format optimization (Parquet, Delta, Iceberg, Hive)
-
-### Streaming & Real-time Processing
-- **`spark_streaming_etl.py`** - Real-time ETL patterns and streaming optimization
-
-### Monitoring & Debugging
-- **`spark_monitoring_debugging.py`** - Performance monitoring, debugging, and bottleneck identification
-
----
-
-## 🔧 Detailed Module Descriptions
-
-### 1. **spark_sql_connection.py** - Universal JDBC Connectivity
-**Purpose**: Provides comprehensive JDBC connectivity to any database with advanced partitioning and optimization features.
-
-**Key Features**:
-- **Multi-Database Support**: SQL Server, MySQL, PostgreSQL, Oracle with optimized drivers
-- **Advanced Partitioning**: Numeric bounds, date-based, and custom predicate partitioning
-- **Connection Optimization**: Database-specific performance tuning and connection pooling
-- **Parallel Extraction**: Optimized parallel reads with partition distribution analysis
-- **Performance Recommendations**: Automatic optimization suggestions based on data size
-
-**Partitioning Strategies**:
-- **Numeric Partitioning**: `lower_bound`, `upper_bound`, `num_partitions` for parallel reads
-- **Date-Based Partitioning**: Daily, weekly, monthly automatic partition generation
-- **Custom Predicates**: Complex business logic partitioning with custom SQL conditions
-- **Query-Level Partitioning**: Partition complex SQL queries for parallel execution
-
-**When to Use**:
-- Reading from any JDBC-compatible database
-- Large table extraction requiring parallelization
-- Cross-database ETL operations
-- Performance-critical data ingestion
-
-**Example Usage**:
-```python
-connector = SparkJDBCConnector()
-
-# Numeric partitioning for large tables
-df = connector.extract_with_partitioning(
-    db_type="sqlserver",
-    server="your-server", 
-    database="database",
-    username="user", 
-    password="pass",
-    table_name="large_sales_table",
-    partition_column="order_id",
-    lower_bound=1,
-    upper_bound=10000000,
-    num_partitions=20
-)
-
-# Date-based partitioning for time-series data
-df = connector.extract_with_date_partitioning(
-    db_type="postgresql",
-    table_name="transactions",
-    date_column="transaction_date", 
-    start_date="2024-01-01",
-    end_date="2024-12-31",
-    partition_strategy="monthly"
-)
-
-# Custom predicates for complex logic
-custom_predicates = [
-    "region = 'North' AND status = 'active'",
-    "region = 'South' AND status = 'active'",
-    "status = 'inactive'"
-]
-df = connector.extract_with_custom_partitioning(
-    db_type="mysql",
-    table_name="customers",
-    partition_predicates=custom_predicates
-)
+```
+F:\Data_ETL\spark\
+├── 📄 README.md                           # This comprehensive guide
+├── 📄 requirements.txt                    # Python dependencies
+├── 📄 sql_server_config.ini              # SQL Server configuration
+├── 🚀 run_comprehensive_tests.py          # MAIN EXECUTION SCRIPT
+│
+├── 📂 src/                               # All source code (organized)
+│   ├── 📂 spark_classes/                # Spark ETL classes (12 classes)
+│   │   ├── spark_grouping_strategies.py
+│   │   ├── spark_memory_optimization.py
+│   │   ├── spark_advanced_transformations.py
+│   │   ├── spark_query_optimization.py
+│   │   ├── spark_partitioning_strategies.py
+│   │   ├── spark_parallelism_optimization.py
+│   │   ├── spark_advanced_writing_strategies.py
+│   │   ├── spark_file_formats.py
+│   │   ├── spark_monitoring_debugging.py
+│   │   ├── spark_streaming_etl.py
+│   │   ├── spark_sql_connection.py
+│   │   └── fetchsize_usage_examples.py
+│   │
+│   ├── 📂 datasets/                      # Dataset generation
+│   │   └── dataset_generator.py          # Enhanced with staging datasets
+│   │
+│   ├── 📂 tests/                         # Consolidated testing framework
+│   │   ├── 🎯 master_test_suite.py       # MASTER TEST SUITE (consolidated)
+│   │   ├── staging_to_curated_etl_tester.py # ETL workflow testing
+│   │   └── test_all_spark_classes.py     # Comprehensive class testing
+│   │
+│   ├── 📂 performance_analysis/          # Performance testing tools
+│   │   ├── performance_analyzer.py       # Base performance analysis
+│   │   └── advanced_performance_tester.py # Configuration testing
+│   │
+│   └── 📂 sql_server/                    # SQL Server integration
+│       └── sql_server_connector.py       # Connection and operations
+│
+└── 📂 docs/                              # Documentation
+    ├── testing/
+    │   └── testing_guide.md              # Detailed testing guide
+    └── [spark_class_docs].md             # Individual class documentation
 ```
 
-**Performance Impact**:
-- **10-50x faster** data extraction through optimal partitioning
-- **Automatic optimization** recommendations based on data characteristics
-- **Database-specific tuning** for maximum throughput
+## 🚀 **Quick Start Guide**
 
----
+### **Prerequisites**
+```bash
+# Install dependencies
+pip install -r requirements.txt
 
-### 2. **spark_advanced_writing_strategies.py** - Optimized Data Writing
-**Purpose**: Implements data engineering best practices for writing data in different scenarios with optimal performance.
-
-**Key Features**:
-- **Initial Load Optimization**: Fast writing for bulk data loads without bucketing/partitioning
-- **Bucketed Table Creation**: Join-optimized tables with hash distribution
-- **Partitioned Table Management**: Query-optimized tables with partition pruning
-- **Combined Strategies**: Bucketed + partitioned tables for maximum optimization
-- **Format-Specific Optimization**: Parquet, ORC, Delta Lake with compression and block size tuning
-- **Streaming Write Patterns**: Real-time data writing with checkpointing
-
-**Writing Strategies**:
-
-**Initial Load Strategy** (Fast Writing):
-```python
-# Optimized for bulk data loads - no bucketing for speed
-writer.write_for_initial_load_optimization(
-    df=large_df,
-    output_path="/data/staging",
-    file_format="parquet",
-    target_file_size_mb=128,
-    compression="snappy"
-)
+# Configure SQL Server (optional)
+# Edit sql_server_config.ini with your SQL Server details
 ```
 
-**Bucketed Tables** (Join Optimization):
-```python
-# Optimized for frequent joins
-writer.write_bucketed_table(
-    df=customer_df,
-    table_name="customers_bucketed",
-    bucket_columns=["customer_id"],    # Join keys
-    num_buckets=16,                    # Based on data size
-    sort_columns=["customer_id"],      # Sort within buckets
-    file_format="parquet"
-)
+### **Main Execution Options**
+
+The framework provides a single main script with multiple testing modes:
+
+```bash
+# 🎯 Run ALL tests comprehensively (recommended)
+python run_comprehensive_tests.py --mode all
+
+# 🔧 Test specific components
+python run_comprehensive_tests.py --mode spark-classes
+python run_comprehensive_tests.py --mode performance
+python run_comprehensive_tests.py --mode etl-workflow
+python run_comprehensive_tests.py --mode sql-integration
+
+# 📊 Test with different environments
+python run_comprehensive_tests.py --mode all --environment staging
+python run_comprehensive_tests.py --mode all --environment production_like
+
+# ⚙️ Test specific Spark configurations
+python run_comprehensive_tests.py --mode performance \
+    --configurations adaptive_optimized memory_optimized join_optimized
+
+# 🗄️ Skip SQL Server if not available
+python run_comprehensive_tests.py --mode all --no-sql-server
 ```
 
-**Partitioned Tables** (Query Optimization):
-```python
-# Optimized for time-series and filtered queries
-writer.write_partitioned_table(
-    df=sales_df,
-    table_name="sales_partitioned",
-    partition_columns=["year", "quarter"],  # Filter columns
-    file_format="parquet",
-    dynamic_partitioning=True
-)
+## 🧪 **Testing Modes Explained**
+
+### **1. `--mode all` (Comprehensive Testing)**
+- Tests all 12 Spark classes with 70+ functions
+- Performance analysis across multiple configurations
+- Complete staging-to-curated ETL workflow
+- SQL Server integration testing
+- Generates comprehensive performance reports
+
+### **2. `--mode spark-classes` (Class Testing)**
+- Tests individual Spark class methods
+- Volume-based testing (small, medium, large datasets)
+- Memory usage and performance measurement
+- Function-specific validation
+
+### **3. `--mode performance` (Configuration Testing)**
+- Tests 6 different Spark configurations:
+  - `default` - Baseline performance
+  - `adaptive_optimized` - Adaptive query execution
+  - `memory_optimized` - Memory-intensive workloads
+  - `large_data_optimized` - Very large datasets
+  - `join_optimized` - Complex joins and skewed data
+  - `io_optimized` - File operations and compression
+
+### **4. `--mode etl-workflow` (ETL Pipeline Testing)**
+- Complete staging-to-curated data pipeline
+- Data quality analysis and cleaning
+- Complex joins and aggregations
+- Performance measurement across ETL stages
+
+### **5. `--mode sql-integration` (Database Testing)**
+- SQL Server bulk operations
+- Read/write performance benchmarking
+- Connection optimization testing
+- Spark vs SQL Server performance comparison
+
+## 📊 **Dataset Environments**
+
+The framework supports multiple environment configurations:
+
+| Environment | Customers | Products | Stores | Transactions | Use Case |
+|-------------|-----------|----------|--------|--------------|----------|
+| `development` | 1,000 | 500 | 20 | 10,000 | Unit testing |
+| `staging` | 10,000 | 2,000 | 100 | 100,000 | Integration testing |
+| `production_like` | 100,000 | 10,000 | 500 | 1,000,000 | Performance testing |
+| `stress_test` | 500,000 | 50,000 | 1,000 | 5,000,000 | Stress testing |
+
+## 🔧 **Configuration Details**
+
+### **Spark Configurations Tested**
+
+1. **Default Configuration**
+   - Baseline Spark settings
+   - No specific optimizations
+
+2. **Adaptive Optimized**
+   ```
+   spark.sql.adaptive.enabled=true
+   spark.sql.adaptive.coalescePartitions.enabled=true
+   spark.sql.adaptive.skewJoin.enabled=true
+   ```
+
+3. **Memory Optimized**
+   ```
+   spark.executor.memory=4g
+   spark.executor.memoryFraction=0.8
+   spark.sql.execution.arrow.maxRecordsPerBatch=10000
+   ```
+
+4. **Large Data Optimized**
+   ```
+   spark.sql.files.maxPartitionBytes=268435456
+   spark.sql.shuffle.partitions=400
+   ```
+
+5. **Join Optimized**
+   ```
+   spark.sql.adaptive.skewJoin.enabled=true
+   spark.sql.autoBroadcastJoinThreshold=104857600
+   ```
+
+6. **I/O Optimized**
+   ```
+   spark.sql.parquet.compression.codec=snappy
+   spark.serializer=org.apache.spark.serializer.KryoSerializer
+   ```
+
+## 📈 **Performance Metrics Measured**
+
+For every test, the framework measures:
+- ⏱️ **Execution Time** (milliseconds)
+- 💾 **Memory Usage** (MB delta)
+- 🚀 **Throughput** (records/second)
+- 📊 **Scalability** (linear vs superlinear)
+- 🔄 **SQL Server I/O** (read/write performance)
+
+## 🗄️ **SQL Server Integration**
+
+### **Configuration**
+Edit `sql_server_config.ini`:
+```ini
+[DEFAULT]
+server = your_sql_server
+database = your_database
+username = your_username
+password = your_password
 ```
 
-**Combined Strategy** (Maximum Optimization):
-```python
-# Best of both worlds for large fact tables
-writer.write_bucketed_and_partitioned_table(
-    df=fact_table,
-    table_name="sales_fact_optimized",
-    partition_columns=["year", "quarter"],     # Time partitioning
-    bucket_columns=["customer_id"],            # Join optimization
-    num_buckets=32,
-    sort_columns=["customer_id", "order_date"]
-)
+### **Capabilities**
+- **Bulk Operations**: Optimized read/write with configurable batch sizes
+- **Performance Benchmarking**: Measures throughput for different data volumes
+- **Staging-to-Curated Workflows**: Complete ETL pipeline testing
+- **Connection Optimization**: Tests different connection strategies
+
+## 📋 **Generated Reports**
+
+The framework generates comprehensive reports:
+
+1. **Master Test Report** (`master_test_report_YYYYMMDD_HHMMSS.json`)
+   - Complete test results for all functions
+   - Performance metrics and trends
+   - Configuration recommendations
+
+2. **Configuration Comparison Report** (`configuration_performance_report_YYYYMMDD_HHMMSS.json`)
+   - Best performing configurations for each operation
+   - Optimization recommendations
+   - Scaling analysis
+
+3. **ETL Performance Report** (`etl_performance_report_YYYYMMDD_HHMMSS.json`)
+   - End-to-end pipeline performance
+   - Data quality metrics
+   - Bottleneck identification
+
+## 🎯 **Key Features**
+
+### **✅ Comprehensive Coverage**
+- **Every function** in **every Spark class** tested
+- **Multiple data volumes** (1K to 5M+ records)
+- **Realistic data scenarios** with quality issues
+
+### **✅ Performance Optimization**
+- **Automatic configuration testing** finds optimal settings
+- **Scaling analysis** shows performance characteristics
+- **Memory and throughput optimization** recommendations
+
+### **✅ Real-World Scenarios**
+- **Staging-to-curated workflows** with data cleaning
+- **SQL Server integration** with bulk operations
+- **Data quality issues** simulation for robust ETL testing
+
+### **✅ Advanced Reporting**
+- **Detailed performance metrics** for every operation
+- **Configuration recommendations** based on actual data
+- **Executive summaries** for stakeholder communication
+
+## 🔄 **ETL Workflow Testing**
+
+The framework includes complete ETL pipeline testing:
+
+### **Pipeline Stages**
+1. **Data Generation** - Realistic datasets with quality issues
+2. **Staging Load** - Bulk insert to SQL Server staging tables
+3. **Data Quality Analysis** - Comprehensive quality metrics
+4. **Data Cleaning** - Configurable cleaning rules
+5. **Complex Joins** - Create curated dimensional model
+6. **Curated Load** - Optimized writes to curated tables
+
+### **Data Quality Features**
+- **15% quality issues** introduced (nulls, negatives, future dates)
+- **Configurable cleaning rules** per table type
+- **Quality metrics reporting** with recommendations
+
+## 📚 **Advanced Usage Examples**
+
+### **Custom Configuration Testing**
+```bash
+# Test specific configurations with large datasets
+python run_comprehensive_tests.py \
+    --mode performance \
+    --environment production_like \
+    --configurations memory_optimized join_optimized
 ```
 
-**When to Use Each Strategy**:
-- **Initial Loads**: Non-bucketed for maximum write speed
-- **Dimension Tables**: Bucketed for join performance
-- **Time-Series Data**: Partitioned for query pruning
-- **Large Fact Tables**: Combined bucketing + partitioning
+### **ETL Workflow with Quality Analysis**
+```bash
+# Test complete ETL pipeline with data quality checks
+python run_comprehensive_tests.py \
+    --mode etl-workflow \
+    --environment staging
+```
 
-**Data Engineering Best Practices**:
-- ✅ **Read from indexed databases** with partition-aligned bounds
-- ✅ **Write to non-bucketed tables** for initial loads (speed priority)
-- ✅ **Create bucketed tables** for operational queries (join optimization)
-- ✅ **Use partitioned tables** for analytics (query pruning)
+### **SQL Server Performance Benchmarking**
+```bash
+# Benchmark SQL Server operations across environments
+python run_comprehensive_tests.py \
+    --mode sql-integration \
+    --environment production_like
+```
 
----
+## 🛠️ **Development and Extension**
 
-### 3. **spark_query_optimization.py** - Advanced Query Performance
-**Purpose**: Advanced query optimization techniques for faster analytical processing.
+### **Adding New Spark Classes**
+1. Create class in `src/spark_classes/`
+2. Add test method to `master_test_suite.py`
+3. Update the `test_all_spark_classes()` method
 
-**Key Features**:
-- Cost-Based Optimization (CBO) configuration
-- Predicate pushdown optimization
-- Join strategy selection
-- Window function optimization
-- SQL query pattern optimization
+### **Adding New Configurations**
+1. Update `get_spark_configurations()` in `advanced_performance_tester.py`
+2. Add configuration to command-line choices
 
-**When to Use**:
-- Complex analytical queries
-- Multi-table joins
-- Aggregation-heavy workloads
-- Window function operations
+### **Customizing ETL Workflows**
+1. Modify cleaning rules in `staging_to_curated_etl_tester.py`
+2. Add new data quality checks
+3. Extend join logic for specific business requirements
 
-**Performance Techniques**:
-- **Predicate Pushdown**: Filter at source (database level)
-- **Join Ordering**: Smaller tables first
-- **Window Optimization**: Proper partitioning and ordering
-- **CBO**: Statistics-driven query planning
+## 🏆 **Best Practices**
 
----
+1. **Start with small environments** for development and testing
+2. **Use staging environment** for integration testing
+3. **Run production_like tests** before production deployment
+4. **Monitor memory usage** during large dataset testing
+5. **Review performance reports** for optimization opportunities
+6. **Test with realistic data quality issues** for robust ETL
 
-### 4. **spark_parallelism_optimization.py** - Performance Through Parallelism
-**Purpose**: Ensures optimal parallelism and demonstrates techniques to maximize cluster utilization.
+## 📞 **Support and Documentation**
 
-**Key Features**:
-- Parallelism configuration and tuning
-- Broadcast join optimization
-- Shuffle operation minimization
-- Parallel read/write optimization
-- Memory optimization techniques
-
-**When to Use**:
-- Performance tuning for slow jobs
-- Optimizing cluster resource utilization
-- Handling large datasets efficiently
-
-**Performance Impact**:
-- 3-5x performance improvement through proper parallelism
-- Reduced memory pressure through broadcast joins
-- Faster I/O through optimized partitioning
+- **Detailed Testing Guide**: `docs/testing/testing_guide.md`
+- **Class Documentation**: Individual `.md` files in `docs/`
+- **Performance Reports**: Generated in JSON format with human-readable summaries
 
 ---
 
-### 5. **spark_partitioning_strategies.py** - Smart Data Distribution
-**Purpose**: Demonstrates when and how to partition data for optimal performance.
+## 🎉 **Quick Test Execution**
 
-**Key Features**:
-- Hash vs Range partitioning strategies
-- Coalesce vs Repartition trade-offs
-- Partition size optimization
-- Time-series data partitioning
-- Join-optimized partitioning
+Ready to start? Run this command for a complete test:
 
-**When to Use**:
-- Before expensive operations (joins, aggregations)
-- When dealing with skewed data
-- Optimizing file sizes for storage
-- Time-series data processing
+```bash
+python run_comprehensive_tests.py --mode all --environment staging
+```
 
-**Decision Matrix**:
-- **Hash Partitioning**: Even distribution, random access patterns
-- **Range Partitioning**: Ordered data, range queries
-- **Coalesce**: Reducing partitions without shuffle
-- **Repartition**: Even distribution with shuffle
+This will test all 12 Spark classes, 70+ functions, multiple configurations, ETL workflows, and generate comprehensive performance reports!
 
 ---
 
-### 6. **spark_grouping_strategies.py** - Aggregation Optimization
-**Purpose**: Demonstrates optimal grouping and aggregation strategies for different scenarios.
-
-**Key Features**:
-- GroupBy vs Window function selection
-- Multi-level grouping with rollup/cube
-- Skewed data handling in aggregations
-- Time-series aggregation patterns
-- Memory-efficient aggregation techniques
-
-**When to Use**:
-- Large-scale aggregations
-- Time-series analytics
-- Hierarchical data analysis
-- Skewed data processing
-
-**Strategy Guide**:
-- **GroupBy**: Final aggregated results, data reduction
-- **Window Functions**: Detail + aggregation, ranking operations
-- **Rollup/Cube**: Multi-level hierarchical aggregations
-- **Approximate Functions**: Large dataset estimations
-
----
-
-### 7. **spark_advanced_transformations.py** - Complex Data Processing
-**Purpose**: Advanced transformation patterns for complex ETL scenarios and data quality.
-
-**Key Features**:
-- Complex data type handling (arrays, maps, structs)
-- Advanced string processing and regex operations
-- Date/time transformations and business logic
-- Data quality validation and cleansing
-- Performance-optimized transformation patterns
-
-**When to Use**:
-- Semi-structured data processing
-- Data quality enforcement
-- Complex business rule implementation
-- JSON/nested data handling
-
-**Transformation Categories**:
-- **Data Type Operations**: Arrays, maps, structs manipulation
-- **String Processing**: Cleaning, extraction, normalization
-- **Date/Time**: Business date calculations, timezone handling
-- **Data Quality**: Validation rules, outlier detection
-
----
-
-### 8. **spark_file_formats.py** - Storage Optimization
-**Purpose**: Optimal file format selection and configuration for different use cases.
-
-**Key Features**:
-- Parquet optimization (compression, block sizes)
-- Delta Lake ACID operations
-- Apache Iceberg table management
-- Hive table integration
-- Compression codec comparison
-- Columnar vs row-based format selection
-
-**When to Use**:
-- Storage cost optimization
-- Query performance improvement
-- ACID transaction requirements
-- Schema evolution needs
-
-**Format Selection Guide**:
-- **Parquet**: Analytics, columnar access, compression
-- **Delta Lake**: ACID transactions, versioning, streaming
-- **Iceberg**: Schema evolution, hidden partitioning, time travel
-- **Hive**: Metadata management, legacy integration
-- **Avro**: Schema evolution, streaming pipelines
-
----
-
-### 9. **spark_memory_optimization.py** - Memory Management
-**Purpose**: Advanced memory management techniques for large-scale processing.
-
-**Key Features**:
-- Caching strategy optimization
-- Memory-efficient processing patterns
-- Garbage collection optimization
-- Spill and shuffle minimization
-- Memory leak prevention
-- Memory usage monitoring
-
-**When to Use**:
-- Memory-constrained environments
-- Large dataset processing
-- Long-running applications
-- Performance optimization
-
-**Memory Strategies**:
-- **MEMORY_ONLY**: Fast access, higher risk
-- **MEMORY_AND_DISK**: Balanced performance/safety
-- **MEMORY_ONLY_SER**: Memory-efficient serialization
-- **DISK_ONLY**: Memory-constrained clusters
-
----
-
-### 10. **spark_streaming_etl.py** - Real-time Processing
-**Purpose**: Real-time ETL patterns and streaming optimization techniques.
-
-**Key Features**:
-- Kafka integration and optimization
-- Streaming transformations with watermarking
-- Stream-static and stream-stream joins
-- Multiple sink optimization
-- Late data and error handling
-- Streaming performance tuning
-
-**When to Use**:
-- Real-time analytics
-- Event processing
-- Continuous ETL pipelines
-- Fraud detection systems
-
-**Streaming Patterns**:
-- **Windowed Aggregations**: Time-based analytics
-- **Watermarking**: Late data handling
-- **Triggers**: Batch interval optimization
-- **Checkpointing**: Fault tolerance
-
----
-
-### 11. **spark_monitoring_debugging.py** - Performance Monitoring
-**Purpose**: Comprehensive monitoring, debugging, and performance analysis tools.
-
-**Key Features**:
-- Performance profiling and metrics collection
-- Query execution analysis
-- Resource usage monitoring
-- Data skew detection and analysis
-- Bottleneck identification
-- Memory leak detection
-
-**When to Use**:
-- Performance troubleshooting
-- Production monitoring
-- Capacity planning
-- Performance optimization
-
-**Monitoring Areas**:
-- **Execution Plans**: Query optimization analysis
-- **Resource Usage**: CPU, memory, disk utilization
-- **Data Skew**: Partition imbalance detection
-- **Bottlenecks**: Slow operation identification
-
----
-
-## 🚀 Performance Optimization Checklist
-
-### Before Processing
-- [ ] Analyze data distribution and skew
-- [ ] Choose appropriate file format
-- [ ] Configure optimal partitioning strategy
-- [ ] Set up proper caching for reused data
-
-### During Processing
-- [ ] Monitor resource utilization
-- [ ] Check for data skew in joins/aggregations
-- [ ] Optimize shuffle operations
-- [ ] Use broadcast joins for small tables
-
-### After Processing
-- [ ] Analyze query execution plans
-- [ ] Review performance metrics
-- [ ] Optimize file sizes and compression
-- [ ] Clean up cached data
-
----
-
-## 🔍 Common Performance Issues & Solutions
-
-| Issue | Symptoms | Solution | Module |
-|-------|----------|----------|---------|
-| **Data Skew** | Few tasks take much longer | Salting, different partitioning | `spark_partitioning_strategies.py` |
-| **Memory Issues** | OOM errors, slow GC | Better caching strategy, memory tuning | `spark_memory_optimization.py` |
-| **Slow Joins** | Long join execution time | Broadcast joins, proper partitioning | `spark_query_optimization.py` |
-| **Many Small Files** | Slow reads, metadata overhead | Coalesce before writing | `spark_file_formats.py` |
-| **Shuffle Overhead** | High network I/O | Reduce shuffles, optimize grouping | `spark_grouping_strategies.py` |
-
----
-
-## 📊 Best Practices Summary
-
-### Data Ingestion
-1. **Use partitioned reads** for large tables
-2. **Apply predicate pushdown** at source
-3. **Choose optimal file formats** for your use case
-4. **Configure proper compression** for storage efficiency
-
-### Data Processing
-1. **Cache strategically** for reused DataFrames
-2. **Optimize join strategies** based on table sizes
-3. **Handle data skew** proactively
-4. **Use appropriate aggregation patterns**
-
-### Data Output
-1. **Optimize output file sizes** (128MB-1GB per file)
-2. **Use appropriate partitioning** for downstream queries
-3. **Choose compression codecs** based on use case
-4. **Implement proper error handling**
-
-### Monitoring
-1. **Track key performance metrics** regularly
-2. **Monitor resource utilization** across cluster
-3. **Analyze query execution plans** for optimization
-4. **Set up alerts** for performance degradation
-
----
-
-## 🛠️ Getting Started
-
-1. **Start with `spark_sql_connection.py`** for basic connectivity
-2. **Use `spark_parallelism_optimization.py`** for initial performance tuning
-3. **Apply `spark_partitioning_strategies.py`** for data distribution optimization
-4. **Implement monitoring** with `spark_monitoring_debugging.py`
-5. **Add advanced features** as needed from other modules
-
-Each module is self-contained with examples and can be used independently or combined for comprehensive ETL solutions.
-
----
-
-## 📈 Expected Performance Improvements
-
-| Optimization Area | Typical Improvement | Module |
-|------------------|-------------------|---------|
-| Parallelism Tuning | 2-5x faster execution | `spark_parallelism_optimization.py` |
-| Smart Partitioning | 3-10x faster joins | `spark_partitioning_strategies.py` |
-| Query Optimization | 2-8x faster queries | `spark_query_optimization.py` |
-| File Format Optimization | 50-80% storage reduction | `spark_file_formats.py` |
-| Memory Management | 30-60% memory reduction | `spark_memory_optimization.py` |
-
-This comprehensive guide provides production-ready patterns for building high-performance Spark ETL pipelines.
+*This framework provides complete visibility into Spark ETL performance across all configurations and realistic data scenarios, with automated optimization recommendations.*
