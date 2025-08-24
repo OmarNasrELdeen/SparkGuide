@@ -11,7 +11,7 @@ This framework provides complete testing coverage for Spark ETL operations inclu
 - **SQL Server integration** with bulk operations and performance benchmarking
 - **Realistic dataset generation** with configurable data quality issues
 
-## 📁 **Project Structure (Streamlined)**
+## 📁 **Project Structure (Current)**
 
 ```
 F:\Data_ETL\spark\
@@ -21,39 +21,51 @@ F:\Data_ETL\spark\
 ├── 🚀 run_comprehensive_tests.py          # MAIN EXECUTION SCRIPT
 │
 ├── 📂 src/                               # All source code (organized)
-│   ├── 📂 spark_classes/                # Spark ETL classes (12 classes)
-│   │   ├── spark_grouping_strategies.py
-│   │   ├── spark_memory_optimization.py
-│   │   ├── spark_advanced_transformations.py
-│   │   ├── spark_query_optimization.py
-│   │   ├── spark_partitioning_strategies.py
-│   │   ├── spark_parallelism_optimization.py
-│   │   ├── spark_advanced_writing_strategies.py
-│   │   ├── spark_file_formats.py
-│   │   ├── spark_monitoring_debugging.py
-│   │   ├── spark_streaming_etl.py
-│   │   ├── spark_sql_connection.py
-│   │   └── fetchsize_usage_examples.py
+│   ├── 📂 spark_classes/                # 🎯 Spark ETL classes (12 classes)
+│   │   ├── spark_grouping_strategies.py      # Grouping and aggregation optimization
+│   │   ├── spark_memory_optimization.py      # Memory management and optimization
+│   │   ├── spark_advanced_transformations.py # Complex data transformations
+│   │   ├── spark_query_optimization.py       # Query optimization techniques
+│   │   ├── spark_partitioning_strategies.py  # Partitioning optimization
+│   │   ├── spark_parallelism_optimization.py # Parallelism and task optimization
+│   │   ├── spark_advanced_writing_strategies.py # Advanced writing strategies
+│   │   ├── spark_file_formats.py             # File format optimization
+│   │   ├── spark_monitoring_debugging.py     # Monitoring and debugging tools
+│   │   ├── spark_streaming_etl.py            # Real-time streaming ETL
+│   │   ├── spark_sql_connection.py           # Multi-database JDBC connections
+│   │   └── fetchsize_usage_examples.py       # JDBC fetchSize optimization
 │   │
-│   ├── 📂 datasets/                      # Dataset generation
-│   │   └── dataset_generator.py          # Enhanced with staging datasets
+│   ├── 📂 datasets/                      # 📊 Dataset generation
+│   │   └── dataset_generator.py          # Enhanced with staging datasets & quality issues
 │   │
-│   ├── 📂 tests/                         # Consolidated testing framework
-│   │   ├── 🎯 master_test_suite.py       # MASTER TEST SUITE (consolidated)
-│   │   ├── staging_to_curated_etl_tester.py # ETL workflow testing
-│   │   └── test_all_spark_classes.py     # Comprehensive class testing
+│   ├── 📂 tests/                         # 🧪 Streamlined testing framework (3 essential files)
+│   │   ├── master_test_suite.py          # 🎯 MASTER: Consolidated testing framework
+│   │   ├── staging_to_curated_etl_tester.py # 🔄 ETL: Specialized workflow testing
+│   │   └── test_all_spark_classes.py     # 🧪 PYTEST: Comprehensive class testing
 │   │
-│   ├── 📂 performance_analysis/          # Performance testing tools
+│   ├── 📂 performance_analysis/          # ⚡ Performance testing tools
 │   │   ├── performance_analyzer.py       # Base performance analysis
 │   │   └── advanced_performance_tester.py # Configuration testing
 │   │
-│   └── 📂 sql_server/                    # SQL Server integration
+│   └── 📂 sql_server/                    # 🗄️ SQL Server integration
 │       └── sql_server_connector.py       # Connection and operations
 │
-└── 📂 docs/                              # Documentation
-    ├── testing/
-    │   └── testing_guide.md              # Detailed testing guide
-    └── [spark_class_docs].md             # Individual class documentation
+└── 📂 docs/                              # 📖 Documentation
+    ├── classes.md                        # Spark classes overview
+    ├── 📂 Classes/                       # Individual class documentation
+    │   ├── spark_grouping_strategies.md
+    │   ├── spark_memory_optimization.md
+    │   ├── spark_advanced_transformations.md
+    │   ├── spark_query_optimization.md
+    │   ├── spark_partitioning_strategies.md
+    │   ├── spark_parallelism_optimization.md
+    │   ├── spark_advanced_writing_strategies.md
+    │   ├── spark_file_formats.md
+    │   ├── spark_monitoring_debugging.md
+    │   ├── spark_streaming_etl.md
+    │   └── spark_sql_connection.md
+    └── 📂 testing/
+        └── testing_guide.md             # Detailed testing guide
 ```
 
 ## 🚀 **Quick Start Guide**
@@ -76,10 +88,11 @@ The framework provides a single main script with multiple testing modes:
 python run_comprehensive_tests.py --mode all
 
 # 🔧 Test specific components
-python run_comprehensive_tests.py --mode spark-classes
-python run_comprehensive_tests.py --mode performance
-python run_comprehensive_tests.py --mode etl-workflow
-python run_comprehensive_tests.py --mode sql-integration
+python run_comprehensive_tests.py --mode spark-classes     # Test all 12 Spark classes
+python run_comprehensive_tests.py --mode performance       # Configuration testing
+python run_comprehensive_tests.py --mode etl-workflow      # ETL pipeline testing
+python run_comprehensive_tests.py --mode sql-integration   # SQL Server testing
+python run_comprehensive_tests.py --mode pytest           # Unit tests with pytest
 
 # 📊 Test with different environments
 python run_comprehensive_tests.py --mode all --environment staging
@@ -128,6 +141,12 @@ python run_comprehensive_tests.py --mode all --no-sql-server
 - Read/write performance benchmarking
 - Connection optimization testing
 - Spark vs SQL Server performance comparison
+
+### **6. `--mode pytest` (Unit Testing)**
+- Professional pytest-style testing
+- Individual function validation
+- Automated test discovery
+- JUnit XML output for CI/CD
 
 ## 📊 **Dataset Environments**
 
@@ -292,19 +311,28 @@ python run_comprehensive_tests.py \
     --environment production_like
 ```
 
+### **Professional Unit Testing**
+```bash
+# Run pytest for CI/CD integration
+python run_comprehensive_tests.py \
+    --mode pytest \
+    --output-dir test_results
+```
+
 ## 🛠️ **Development and Extension**
 
 ### **Adding New Spark Classes**
 1. Create class in `src/spark_classes/`
-2. Add test method to `master_test_suite.py`
+2. Add test method to `src/tests/master_test_suite.py`
 3. Update the `test_all_spark_classes()` method
+4. Add documentation in `docs/Classes/`
 
 ### **Adding New Configurations**
-1. Update `get_spark_configurations()` in `advanced_performance_tester.py`
+1. Update `get_spark_configurations()` in `src/performance_analysis/advanced_performance_tester.py`
 2. Add configuration to command-line choices
 
 ### **Customizing ETL Workflows**
-1. Modify cleaning rules in `staging_to_curated_etl_tester.py`
+1. Modify cleaning rules in `src/tests/staging_to_curated_etl_tester.py`
 2. Add new data quality checks
 3. Extend join logic for specific business requirements
 
@@ -317,11 +345,25 @@ python run_comprehensive_tests.py \
 5. **Review performance reports** for optimization opportunities
 6. **Test with realistic data quality issues** for robust ETL
 
-## 📞 **Support and Documentation**
+## 📞 **Documentation Links**
 
-- **Detailed Testing Guide**: `docs/testing/testing_guide.md`
-- **Class Documentation**: Individual `.md` files in `docs/`
-- **Performance Reports**: Generated in JSON format with human-readable summaries
+- **[Detailed Testing Guide](docs/testing/testing_guide.md)** - Complete testing instructions
+- **[Spark Classes Overview](docs/classes.md)** - Overview of all 12 Spark classes
+- **[Individual Class Docs](docs/Classes/)** - Detailed documentation for each class
+- **Performance Reports** - Generated in JSON format with human-readable summaries
+
+## 🔧 **Troubleshooting**
+
+### **Common Issues**
+1. **Memory Issues**: Increase Spark executor memory or use smaller datasets
+2. **SQL Server Connection**: Verify connection string and credentials in config
+3. **Performance Issues**: Enable adaptive query execution and monitor Spark UI
+4. **Test Failures**: Check dependencies and Spark configuration compatibility
+
+### **Getting Help**
+- Check the [testing guide](docs/testing/testing_guide.md) for detailed instructions
+- Review generated performance reports for optimization suggestions
+- Examine Spark UI for execution plan analysis
 
 ---
 
