@@ -58,6 +58,11 @@ class SparkJDBCConnector:
             "driver": self.db_configs[db_type]["driver"]
         }
 
+        # Extract fetchSize if provided and add as universal JDBC property
+        fetchsize = kwargs.pop("fetchsize", None)
+        if fetchsize:
+            base_properties["fetchsize"] = str(fetchsize)
+
         # Database-specific optimizations
         if db_type == "sqlserver":
             base_properties.update({
@@ -82,6 +87,10 @@ class SparkJDBCConnector:
                 "prepStmtCacheSqlLimit": "2048",
                 "useServerPrepStmts": "true"
             })
+            # For MySQL, also set defaultFetchSize if fetchsize is provided
+            if fetchsize:
+                base_properties["defaultFetchSize"] = str(fetchsize)
+
         elif db_type == "postgresql":
             base_properties.update({
                 "ssl": "false",
@@ -90,6 +99,10 @@ class SparkJDBCConnector:
                 "preparedStatementCacheSizeMiB": "5",
                 "defaultRowFetchSize": "10000"
             })
+            # Override defaultRowFetchSize if fetchsize is provided
+            if fetchsize:
+                base_properties["defaultRowFetchSize"] = str(fetchsize)
+
         elif db_type == "oracle":
             base_properties.update({
                 "oracle.jdbc.ReadTimeout": "0",
@@ -97,6 +110,9 @@ class SparkJDBCConnector:
                 "oracle.jdbc.defaultRowPrefetch": "20",
                 "useFetchSizeWithLongColumn": "true"
             })
+            # Override defaultRowPrefetch if fetchsize is provided
+            if fetchsize:
+                base_properties["oracle.jdbc.defaultRowPrefetch"] = str(min(50, fetchsize // 100))
 
         # Add custom properties
         base_properties.update(kwargs)
@@ -237,6 +253,71 @@ class SparkJDBCConnector:
         return self.extract_with_custom_partitioning(
             db_type, server, database, username, password,
             table_name, predicates, port, **connection_options
+        )
+
+    def extract_with_optimized_partitioning(self, db_type, server, database, username, password,
+                                           table_name, partition_column, lower_bound, upper_bound,
+                                           estimated_rows, port=None, **connection_options):
+        """Extract data with automatic optimization based on estimated row count"""
+        print(f"\n=== Optimized Partitioned Extraction ===")
+
+        # Get optimization recommendations
+        recommendations = self.optimize_connection_for_read_performance(
+            db_type, table_name, estimated_rows
+        )
+
+        # Extract optimization parameters
+        num_partitions = recommendations.pop("num_partitions")
+        fetchsize = recommendations.pop("fetchsize")
+
+        # Combine recommendations with user-provided options
+        optimized_options = {**recommendations, **connection_options, "fetchsize": fetchsize}
+
+        # Call the standard partitioned extraction with optimized settings
+        return self.extract_with_partitioning(
+            db_type=db_type,
+            server=server,
+            database=database,
+            username=username,
+            password=password,
+            table_name=table_name,
+            partition_column=partition_column,
+            lower_bound=lower_bound,
+            upper_bound=upper_bound,
+            num_partitions=num_partitions,
+            port=port,
+            **optimized_options
+        )
+
+    def extract_with_optimized_custom_partitioning(self, db_type, server, database, username, password,
+                                                 table_name, partition_predicates, estimated_rows,
+                                                 port=None, **connection_options):
+        """Extract data with custom partitioning and automatic fetch size optimization"""
+        print(f"\n=== Optimized Custom Partitioned Extraction ===")
+
+        # Get optimization recommendations (mainly for fetchsize)
+        recommendations = self.optimize_connection_for_read_performance(
+            db_type, table_name, estimated_rows
+        )
+
+        # Extract fetchsize and database-specific optimizations
+        fetchsize = recommendations.pop("fetchsize")
+        recommendations.pop("num_partitions")  # Not relevant for custom partitioning
+
+        # Combine recommendations with user-provided options
+        optimized_options = {**recommendations, **connection_options, "fetchsize": fetchsize}
+
+        # Call the custom partitioned extraction with optimized settings
+        return self.extract_with_custom_partitioning(
+            db_type=db_type,
+            server=server,
+            database=database,
+            username=username,
+            password=password,
+            table_name=table_name,
+            partition_predicates=partition_predicates,
+            port=port,
+            **optimized_options
         )
 
     def optimize_connection_for_read_performance(self, db_type, table_name, estimated_rows):

@@ -779,3 +779,392 @@ if skew_ratio > 2:
 ```
 
 This comprehensive documentation covers all configurations, methods, and options in the JDBC connection module with practical examples and performance considerations.
+
+## Method: extract_with_optimized_partitioning()
+
+### Purpose
+Extract data with automatic optimization based on estimated row count. This method automatically calculates optimal partition count and fetchSize, then applies database-specific optimizations.
+
+### Parameters
+- `db_type`: Database type
+- `server`: Database server
+- `database`: Database name
+- `username`: Database username
+- `password`: Database password
+- `table_name`: Table to extract from
+- `partition_column`: Column to partition on (must be numeric)
+- `lower_bound`: Lower bound value for partitioning
+- `upper_bound`: Upper bound value for partitioning
+- `estimated_rows`: Estimated number of rows in the table
+- `port`: Custom port (optional)
+- `**connection_options`: Additional connection properties
+
+### How It Works
+1. **Automatic Optimization**: Calls `optimize_connection_for_read_performance()` internally
+2. **Optimal Partitioning**: Calculates best partition count based on data size
+3. **FetchSize Optimization**: Determines optimal fetchSize for memory efficiency
+4. **Database-Specific Tuning**: Applies database-specific performance settings
+5. **Seamless Integration**: Passes all optimizations to standard partitioned extraction
+
+**Example Usage:**
+```python
+# Automatic optimization - recommended approach
+df = connector.extract_with_optimized_partitioning(
+    db_type="postgresql",
+    server="analytics-db.company.com",
+    database="sales_data",
+    username="etl_user",
+    password="secure_password",
+    table_name="large_sales_table",
+    partition_column="sale_id",
+    lower_bound=1,
+    upper_bound=5000000,
+    estimated_rows=5000000          # System optimizes everything automatically
+)
+
+# Output:
+# === Connection Optimization Recommendations ===
+# Estimated rows: 5,000,000
+# Recommended partitions: 50
+# Recommended fetch size: 10,000
+# Database-specific optimizations:
+#   defaultRowFetchSize: 10000
+#   prepareThreshold: 3
+# 
+# === Optimized Partitioned Extraction ===
+# === Partitioned Extraction from POSTGRESQL ===
+# Partitioned read: 50 partitions on column 'sale_id'
+# Bounds: 1 to 5000000
+# Extracted 5,000,000 rows from large_sales_table
+```
+
+### Optimization Logic
+
+#### Automatic Calculations
+| Metric | Formula | Example (5M rows) |
+|--------|---------|-------------------|
+| **Target Partition Size** | 100,000 rows | 5M ÷ 100K = 50 partitions |
+| **FetchSize Calculation** | `min(10000, max(1000, rows ÷ partitions ÷ 10))` | min(10000, max(1000, 5M ÷ 50 ÷ 10)) = 10,000 |
+| **Memory Per Partition** | fetchSize × avgRowSize | 10K × 200 bytes = ~2MB |
+
+#### Database-Specific Optimizations Applied
+
+**PostgreSQL:**
+```python
+{
+    "fetchsize": "10000",                    # Universal JDBC property
+    "defaultRowFetchSize": "10000",          # PostgreSQL-specific
+    "prepareThreshold": "3",                 # Optimized for large datasets
+    "preparedStatementCacheQueries": "256"   # Enhanced caching
+}
+```
+
+**SQL Server:**
+```python
+{
+    "fetchsize": "10000",           # Universal JDBC property  
+    "packetSize": "32768",          # Large packet for high-volume data
+    "selectMethod": "cursor",       # Server-side cursors
+    "responseBuffering": "adaptive" # Memory-efficient buffering
+}
+```
+
+## Method: extract_with_optimized_custom_partitioning()
+
+### Purpose
+Extract data with custom partitioning predicates and automatic fetchSize optimization. Perfect for complex business logic partitioning with performance benefits.
+
+### Parameters
+- `db_type`: Database type
+- `server`: Database server
+- `database`: Database name
+- `username`: Database username
+- `password`: Database password
+- `table_name`: Table to extract from
+- `partition_predicates`: List of SQL WHERE clauses
+- `estimated_rows`: Estimated number of rows in the table
+- `port`: Custom port (optional)
+- `**connection_options`: Additional connection properties
+
+**Example Usage:**
+```python
+# Custom partitioning with automatic fetchSize optimization
+regional_predicates = [
+    "region_code IN ('US-WEST', 'US-CENTRAL') AND status = 'ACTIVE'",
+    "region_code IN ('US-EAST', 'US-SOUTH') AND status = 'ACTIVE'", 
+    "region_code IN ('CA-ON', 'CA-BC', 'CA-QC') AND status = 'ACTIVE'",
+    "region_code IN ('EU-UK', 'EU-DE', 'EU-FR') AND status = 'ACTIVE'",
+    "status = 'INACTIVE' OR region_code IS NULL"
+]
+
+df = connector.extract_with_optimized_custom_partitioning(
+    db_type="sqlserver",
+    server="customer-db.company.com",
+    database="crm_data",
+    username="analytics_user",
+    password="secure_password",
+    table_name="customer_orders",
+    partition_predicates=regional_predicates,
+    estimated_rows=2500000                   # Auto-calculates optimal fetchSize
+)
+
+# Output:
+# === Connection Optimization Recommendations ===
+# Estimated rows: 2,500,000
+# Recommended partitions: 25 (ignored for custom partitioning)
+# Recommended fetch size: 10,000
+# Database-specific optimizations:
+#   packetSize: 32768
+#   selectMethod: cursor
+#   responseBuffering: adaptive
+#
+# === Optimized Custom Partitioned Extraction ===
+# === Custom Partitioned Extraction ===
+# Custom partitioning with 5 predicates:
+#   Partition 1: region_code IN ('US-WEST', 'US-CENTRAL') AND status = 'ACTIVE'
+#   Partition 2: region_code IN ('US-EAST', 'US-SOUTH') AND status = 'ACTIVE'
+#   ...
+```
+
+## FetchSize Integration and Optimization
+
+### What is FetchSize?
+FetchSize controls **how many rows are fetched from the database per round trip**. It's critical for:
+- **Memory Management**: Prevents loading entire result sets into memory
+- **Network Efficiency**: Reduces number of database round trips  
+- **Performance**: Optimal batch sizes improve throughput dramatically
+
+### FetchSize Integration in All Methods
+
+#### Universal JDBC Property
+All extract methods now properly support the `fetchsize` parameter:
+
+```python
+# Manual fetchSize specification
+df = connector.extract_with_partitioning(
+    # ...connection parameters...
+    fetchsize=5000  # Explicitly set fetchSize
+)
+
+# Automatic fetchSize calculation  
+df = connector.extract_with_optimized_partitioning(
+    # ...connection parameters...
+    estimated_rows=1000000  # System calculates optimal fetchSize
+)
+```
+
+#### Database-Specific FetchSize Properties
+
+| Database | Universal Property | Database-Specific Property | Example Values |
+|----------|-------------------|----------------------------|----------------|
+| **PostgreSQL** | `fetchsize=5000` | `defaultRowFetchSize=5000` | 1K-10K optimal |
+| **SQL Server** | `fetchsize=5000` | *(uses universal)* | 2K-8K optimal |
+| **MySQL** | `fetchsize=5000` | `defaultFetchSize=5000` | 1K-5K optimal |
+| **Oracle** | `fetchsize=5000` | `oracle.jdbc.defaultRowPrefetch=50` | 20-50 prefetch |
+
+### FetchSize Performance Guidelines
+
+#### Optimal FetchSize Selection
+
+| Dataset Size | Recommended FetchSize | Reasoning | Memory Impact |
+|--------------|----------------------|-----------|---------------|
+| **Small** (<100K rows) | 1,000 | Reduce memory overhead | ~200KB per partition |
+| **Medium** (100K-1M) | 5,000 | Balance performance/memory | ~1MB per partition |
+| **Large** (1M-10M) | 10,000 | Maximize throughput | ~2MB per partition |
+| **Huge** (>10M) | 10,000 | Maximum efficiency | ~2MB per partition |
+
+#### FetchSize Calculation Formula
+```python
+# Automatic calculation used by optimized methods
+target_partition_size = 100000  # rows per partition
+recommended_partitions = max(1, min(200, estimated_rows // target_partition_size))
+fetchsize = min(10000, max(1000, estimated_rows // recommended_partitions // 10))
+```
+
+### Complete FetchSize Examples
+
+#### Example 1: Manual FetchSize Control
+```python
+# Traditional approach with manual optimization
+connector = SparkJDBCConnector("ManualOptimization")
+
+# Get recommendations first
+recommendations = connector.optimize_connection_for_read_performance(
+    db_type="postgresql",
+    table_name="transactions",
+    estimated_rows=3000000
+)
+
+# Apply recommendations manually
+df = connector.extract_with_partitioning(
+    db_type="postgresql",
+    server="analytics-db.company.com",
+    database="financial_data",
+    username="etl_user",
+    password="password",
+    table_name="transactions",
+    partition_column="transaction_id",
+    lower_bound=1,
+    upper_bound=3000000,
+    num_partitions=recommendations["num_partitions"],      # 30 partitions
+    fetchsize=recommendations["fetchsize"],                # 10,000 rows per fetch
+    # Apply other database-specific optimizations
+    defaultRowFetchSize=str(recommendations["fetchsize"]),
+    prepareThreshold="3"
+)
+
+# Results in optimal performance:
+# - 30 partitions × 10K fetchsize = 300K rows fetched simultaneously
+# - ~60MB total memory usage (30 × 2MB per partition)
+# - Minimized database round trips
+```
+
+#### Example 2: Automatic Optimization (Recommended)
+```python
+# Modern approach with automatic optimization
+connector = SparkJDBCConnector("AutoOptimization")
+
+# Single method call handles everything
+df = connector.extract_with_optimized_partitioning(
+    db_type="postgresql", 
+    server="analytics-db.company.com",
+    database="financial_data",
+    username="etl_user",
+    password="password",
+    table_name="transactions",
+    partition_column="transaction_id",
+    lower_bound=1,
+    upper_bound=3000000,
+    estimated_rows=3000000                                 # System optimizes everything
+)
+
+# Automatically applies:
+# ✓ Optimal partition count (30)
+# ✓ Optimal fetchSize (10,000)  
+# ✓ Database-specific properties
+# ✓ Memory-efficient settings
+```
+
+#### Example 3: Custom Partitioning with FetchSize Optimization
+```python
+# Complex business logic with automatic fetchSize
+business_predicates = [
+    "customer_tier = 'PREMIUM' AND region = 'NORTH'",
+    "customer_tier = 'PREMIUM' AND region = 'SOUTH'",
+    "customer_tier = 'GOLD' AND total_value > 10000",
+    "customer_tier = 'SILVER' AND last_purchase >= '2024-01-01'",
+    "customer_tier IN ('BRONZE', 'BASIC') OR customer_tier IS NULL"
+]
+
+df = connector.extract_with_optimized_custom_partitioning(
+    db_type="sqlserver",
+    server="crm-db.company.com",
+    database="customer_analytics", 
+    username="data_analyst",
+    password="secure_password",
+    table_name="customer_transactions",
+    partition_predicates=business_predicates,
+    estimated_rows=1500000                                 # Auto-optimizes fetchSize
+)
+
+# Automatically applies:
+# ✓ Optimal fetchSize based on estimated data size
+# ✓ SQL Server-specific optimizations (packetSize, selectMethod)
+# ✓ Memory-efficient processing across 5 business-logic partitions
+```
+
+### FetchSize Performance Impact Analysis
+
+#### Before FetchSize Optimization
+```python
+# Old approach - no fetchSize optimization
+# Problems:
+# - Default fetchSize often too small (hundreds of rows)
+# - Excessive database round trips
+# - Poor network utilization
+# - Slower overall performance
+
+# Example: 1M rows with default fetchSize=100
+# Result: 10,000 round trips to database
+# Network overhead: High
+# Performance: Suboptimal
+```
+
+#### After FetchSize Optimization  
+```python
+# New approach - optimized fetchSize
+# Benefits:
+# - Optimal fetchSize (1K-10K rows)
+# - Minimized database round trips  
+# - Efficient network utilization
+# - Dramatically improved performance
+
+# Example: 1M rows with optimized fetchSize=10,000
+# Result: 100 round trips to database
+# Network overhead: Minimal
+# Performance: Optimal (up to 10x faster)
+```
+
+### Memory Management with FetchSize
+
+#### Memory Calculation
+```python
+# Memory usage per partition
+memory_per_partition = fetchsize × average_row_size_bytes
+
+# Example calculations:
+# - fetchSize=10,000, avgRowSize=200 bytes → 2MB per partition
+# - 20 partitions × 2MB = 40MB total memory usage
+# - Scales linearly with partition count and fetchSize
+```
+
+#### Memory Optimization Strategies
+```python
+# For memory-constrained environments
+df = connector.extract_with_partitioning(
+    # ...connection parameters...
+    fetchsize=2000,           # Smaller fetchSize
+    num_partitions=10         # Fewer partitions
+    # Total memory: 10 × 400KB = 4MB
+)
+
+# For high-performance environments  
+df = connector.extract_with_optimized_partitioning(
+    # ...connection parameters...
+    estimated_rows=10000000   # System optimizes for maximum throughput
+    # Automatic: fetchSize=10000, partitions=100
+    # Total memory: 100 × 2MB = 200MB
+)
+```
+
+### Troubleshooting FetchSize Issues
+
+#### Common Problems and Solutions
+
+| Problem | Symptoms | Solution |
+|---------|----------|----------|
+| **OutOfMemoryError** | JVM heap space exceeded | Reduce `fetchsize` or `num_partitions` |
+| **Slow Performance** | Long extraction times | Increase `fetchsize` (up to 10K) |
+| **Connection Timeouts** | Database connection drops | Use `selectMethod=cursor` for SQL Server |
+| **Empty Partitions** | Some partitions have no data | Use custom predicates instead of bounds |
+| **Uneven Performance** | Some partitions much slower | Check for data skew, adjust predicates |
+
+#### Performance Monitoring
+```python
+# Monitor fetchSize effectiveness
+start_time = time.time()
+df = connector.extract_with_optimized_partitioning(...)
+extraction_time = time.time() - start_time
+
+# Analyze partition distribution
+partition_sizes = df.rdd.glom().map(len).collect()
+print(f"Extraction time: {extraction_time:.2f} seconds")
+print(f"Rows per second: {df.count() / extraction_time:.0f}")
+print(f"Partition sizes - min: {min(partition_sizes)}, max: {max(partition_sizes)}")
+
+# Check for optimal performance
+avg_partition_size = sum(partition_sizes) / len(partition_sizes)
+if max(partition_sizes) / avg_partition_size > 2:
+    print("WARNING: Partition skew detected - consider custom predicates")
+```
+
