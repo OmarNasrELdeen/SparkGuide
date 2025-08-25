@@ -472,6 +472,31 @@ class DatasetGenerator:
 
         return sales_fact
 
+    def get_dataset_configs(self):
+        """Return predefined dataset configurations for different volumes"""
+        return {
+            "small": {
+                "records": 1000,
+                "skew_factor": 0.1,
+                "description": "Small dataset for quick testing"
+            },
+            "medium": {
+                "records": 50000,
+                "skew_factor": 0.2,
+                "description": "Medium dataset for performance testing"
+            },
+            "large": {
+                "records": 500000,
+                "skew_factor": 0.3,
+                "description": "Large dataset for stress testing"
+            },
+            "xlarge": {
+                "records": 2000000,
+                "skew_factor": 0.4,
+                "description": "Extra large dataset for scalability testing"
+            }
+        }
+
     def get_staging_dataset_configs(self):
         """Return predefined staging dataset configurations"""
         return {

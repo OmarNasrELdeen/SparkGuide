@@ -107,13 +107,25 @@ class TestAllSparkClasses:
             volume_results = {}
 
             # Test when_to_group_vs_window
-            def test_group_vs_window():
-                return grouper.when_to_group_vs_window(df)
+            def test_group_vs_window_grouped():
+                grouped_result, windowed_result = grouper.when_to_group_vs_window(df)
+                return grouped_result
 
-            perf = performance_analyzer.benchmark_transformations(
-                df, {"group_vs_window": lambda d: test_group_vs_window()}
+            def test_group_vs_window_windowed():
+                grouped_result, windowed_result = grouper.when_to_group_vs_window(df)
+                return windowed_result
+
+            perf_grouped = performance_analyzer.benchmark_transformations(
+                df, {"group_vs_window_grouped": lambda d: test_group_vs_window_grouped()}
             )
-            volume_results['group_vs_window'] = perf
+            perf_windowed = performance_analyzer.benchmark_transformations(
+                df, {"group_vs_window_windowed": lambda d: test_group_vs_window_windowed()}
+            )
+
+            volume_results['group_vs_window'] = {
+                'grouped': perf_grouped,
+                'windowed': perf_windowed
+            }
 
             # Test optimize_multi_level_grouping
             def test_multi_level():
