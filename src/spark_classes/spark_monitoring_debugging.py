@@ -9,7 +9,7 @@ from pyspark.sql.types import *
 import time
 import json
 
-class SparkMonitoringDebugger:
+class SparkMonitoringDebugging:
     def __init__(self, app_name="SparkMonitoring"):
         """Initialize Spark with monitoring and debugging configurations"""
         self.spark = SparkSession.builder \
@@ -340,9 +340,62 @@ class SparkMonitoringDebugger:
 
         return report
 
+    def performance_monitoring(self, df, operation_name="DataFrame Operation"):
+        """Monitor performance metrics for the test suite"""
+        print(f"\n=== Performance Monitoring: {operation_name} ===")
+        print(f"Monitoring DataFrame operation performance")
+
+        results = {}
+
+        try:
+            # 1. Basic performance metrics
+            start_time = time.time()
+
+            # Count operation to trigger execution
+            row_count = df.count()
+            execution_time = time.time() - start_time
+
+            # 2. Partition analysis
+            partition_count = df.rdd.getNumPartitions()
+            partition_sizes = df.rdd.glom().map(len).collect()
+
+            # 3. Memory usage analysis
+            sc = self.spark.sparkContext
+            executor_infos = sc.statusTracker().getExecutorInfos()
+            total_memory_used = sum(e.memoryUsed for e in executor_infos)
+
+            # 4. Calculate performance metrics
+            throughput = row_count / execution_time if execution_time > 0 else 0
+            avg_partition_size = sum(partition_sizes) / len(partition_sizes) if partition_sizes else 0
+
+            results = {
+                'operation_name': operation_name,
+                'execution_time_seconds': execution_time,
+                'row_count': row_count,
+                'throughput_rows_per_sec': throughput,
+                'partition_count': partition_count,
+                'avg_partition_size': avg_partition_size,
+                'max_partition_size': max(partition_sizes) if partition_sizes else 0,
+                'min_partition_size': min(partition_sizes) if partition_sizes else 0,
+                'total_memory_used_mb': total_memory_used / (1024 * 1024),
+                'executor_count': len(executor_infos)
+            }
+
+            print(f"✅ Performance monitoring completed successfully")
+            print(f"   Execution time: {execution_time:.2f}s")
+            print(f"   Throughput: {throughput:.2f} rows/sec")
+            print(f"   Partitions: {partition_count}")
+            print(f"   Memory used: {results['total_memory_used_mb']:.2f} MB")
+
+            return results
+
+        except Exception as e:
+            print(f"❌ Performance monitoring failed: {e}")
+            return {'error': str(e)}
+
 # Example usage
 if __name__ == "__main__":
-    monitor = SparkMonitoringDebugger()
+    monitor = SparkMonitoringDebugging()
 
     # Create sample data for testing
     data = [(i, f"category_{i % 10}", i * 10, f"2024-{(i%12)+1:02d}-01")

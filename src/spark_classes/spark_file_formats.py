@@ -7,7 +7,7 @@ from pyspark.sql import SparkSession
 from pyspark.sql.functions import *
 from pyspark.sql.types import *
 
-class SparkFileFormatHandler:
+class SparkFileFormats:
     def __init__(self, app_name="SparkFileFormats"):
         """Initialize Spark with file format optimizations"""
         self.spark = SparkSession.builder \
@@ -292,9 +292,70 @@ class SparkFileFormatHandler:
             except Exception as e:
                 print(f"Could not test {format_name}: {e}")
 
+    def parquet_optimization_techniques(self, df, output_path):
+        """Comprehensive parquet optimization techniques for the test suite"""
+        print(f"\n=== Parquet Optimization Techniques ===")
+        print(f"Testing various parquet optimization strategies")
+
+        results = {}
+
+        try:
+            # 1. Basic parquet write with snappy compression
+            basic_path = f"{output_path}/basic"
+            df.write.mode("overwrite") \
+                .option("compression", "snappy") \
+                .parquet(basic_path)
+            results['basic_write'] = True
+
+            # 2. Optimized block and page sizes
+            optimized_path = f"{output_path}/optimized"
+            df.write.mode("overwrite") \
+                .option("compression", "snappy") \
+                .option("parquet.block.size", "134217728") \
+                .option("parquet.page.size", "1048576") \
+                .parquet(optimized_path)
+            results['optimized_write'] = True
+
+            # 3. Column pruning test
+            pruned_df = self.spark.read.parquet(basic_path) \
+                .select("id", "amount") if "amount" in df.columns else self.spark.read.parquet(basic_path).limit(10)
+            results['column_pruning_count'] = pruned_df.count()
+
+            # 4. Predicate pushdown test
+            if "amount" in df.columns:
+                filtered_df = self.spark.read.parquet(basic_path) \
+                    .filter(col("amount") > 0)
+                results['predicate_pushdown_count'] = filtered_df.count()
+            else:
+                results['predicate_pushdown_count'] = df.count()
+
+            # 5. Read performance comparison
+            import time
+            start_time = time.time()
+            read_df = self.spark.read.parquet(optimized_path)
+            read_count = read_df.count()
+            read_time = time.time() - start_time
+
+            results['read_performance'] = {
+                'time_seconds': read_time,
+                'rows_per_second': read_count / read_time if read_time > 0 else 0,
+                'total_rows': read_count
+            }
+
+            print(f"✅ Parquet optimization completed successfully")
+            print(f"   Basic write: {results['basic_write']}")
+            print(f"   Optimized write: {results['optimized_write']}")
+            print(f"   Read performance: {results['read_performance']['rows_per_second']:.2f} rows/sec")
+
+            return results
+
+        except Exception as e:
+            print(f"❌ Parquet optimization failed: {e}")
+            return {'error': str(e)}
+
 # Example usage
 if __name__ == "__main__":
-    handler = SparkFileFormatHandler()
+    handler = SparkFileFormats()
 
     # Create sample data
     data = [(i, f"customer_{i}", i * 100, 2024, (i % 12) + 1)

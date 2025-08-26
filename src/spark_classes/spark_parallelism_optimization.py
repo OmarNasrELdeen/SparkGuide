@@ -136,6 +136,61 @@ class SparkParallelismOptimizer:
 
         print(f"Data written to {output_path} with {num_partitions} files")
 
+    def analyze_parallelism_potential(self, df):
+        """Analyze parallelism potential for the test suite"""
+        print(f"\n=== Parallelism Analysis ===")
+        print(f"Analyzing DataFrame parallelism potential")
+
+        results = {}
+
+        try:
+            # 1. Current parallelism metrics
+            current_partitions = df.rdd.getNumPartitions()
+            default_parallelism = self.spark.sparkContext.defaultParallelism
+            shuffle_partitions = int(self.spark.conf.get('spark.sql.shuffle.partitions'))
+
+            # 2. Partition distribution analysis
+            partition_sizes = df.rdd.glom().map(len).collect()
+            total_records = sum(partition_sizes)
+
+            # 3. Calculate parallelism metrics
+            avg_partition_size = total_records / current_partitions if current_partitions > 0 else 0
+            max_partition_size = max(partition_sizes) if partition_sizes else 0
+            min_partition_size = min(partition_sizes) if partition_sizes else 0
+
+            # 4. Parallelism efficiency calculation
+            efficiency = min_partition_size / max_partition_size if max_partition_size > 0 else 0
+
+            # 5. Recommendations
+            optimal_partitions = max(1, total_records // 100000)  # Target ~100k records per partition
+            parallelism_score = min(100, (efficiency * 100))
+
+            results = {
+                'current_partitions': current_partitions,
+                'default_parallelism': default_parallelism,
+                'shuffle_partitions': shuffle_partitions,
+                'total_records': total_records,
+                'avg_partition_size': avg_partition_size,
+                'max_partition_size': max_partition_size,
+                'min_partition_size': min_partition_size,
+                'partition_efficiency': efficiency,
+                'parallelism_score': parallelism_score,
+                'recommended_partitions': optimal_partitions,
+                'partition_distribution': partition_sizes
+            }
+
+            print(f"✅ Parallelism analysis completed successfully")
+            print(f"   Current partitions: {current_partitions}")
+            print(f"   Parallelism score: {parallelism_score:.2f}/100")
+            print(f"   Partition efficiency: {efficiency:.2f}")
+            print(f"   Recommended partitions: {optimal_partitions}")
+
+            return results
+
+        except Exception as e:
+            print(f"❌ Parallelism analysis failed: {e}")
+            return {'error': str(e)}
+
 # Example usage
 if __name__ == "__main__":
     optimizer = SparkParallelismOptimizer()
