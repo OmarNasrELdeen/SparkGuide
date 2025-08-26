@@ -8,7 +8,7 @@ from pyspark.sql import SparkSession
 from pyspark.sql.functions import *
 from pyspark.sql.types import *
 
-class SparkAdvancedWriter:
+class SparkAdvancedWritingStrategies:
     def __init__(self, app_name="SparkAdvancedWriter"):
         """Initialize Spark with advanced writing optimizations"""
         self.spark = SparkSession.builder \
@@ -368,6 +368,93 @@ class SparkAdvancedWriter:
         except Exception as e:
             print(f"Could not analyze partitioning: {e}")
 
+    def optimize_file_formats(self, df, output_path, formats=None):
+        """Optimize and compare different file formats for the given DataFrame"""
+        print(f"\n=== File Format Optimization ===")
+        print(f"Testing different file formats for optimal performance")
+
+        if formats is None:
+            formats = ["parquet", "orc", "delta", "json", "csv"]
+
+        results = {}
+
+        for file_format in formats:
+            try:
+                format_path = f"{output_path}_{file_format}"
+                print(f"\nTesting {file_format.upper()} format...")
+
+                # Measure write performance
+                import time
+                start_time = time.time()
+
+                if file_format.lower() == "parquet":
+                    df.write.mode("overwrite") \
+                        .option("compression", "snappy") \
+                        .parquet(format_path)
+                elif file_format.lower() == "orc":
+                    df.write.mode("overwrite") \
+                        .format("orc") \
+                        .option("compression", "zlib") \
+                        .save(format_path)
+                elif file_format.lower() == "delta":
+                    df.write.mode("overwrite") \
+                        .format("delta") \
+                        .save(format_path)
+                elif file_format.lower() == "json":
+                    df.write.mode("overwrite") \
+                        .option("compression", "gzip") \
+                        .json(format_path)
+                elif file_format.lower() == "csv":
+                    df.write.mode("overwrite") \
+                        .option("compression", "gzip") \
+                        .option("header", "true") \
+                        .csv(format_path)
+
+                write_time = time.time() - start_time
+
+                # Test read performance
+                start_time = time.time()
+                if file_format.lower() == "parquet":
+                    test_df = self.spark.read.parquet(format_path)
+                elif file_format.lower() == "orc":
+                    test_df = self.spark.read.format("orc").load(format_path)
+                elif file_format.lower() == "delta":
+                    test_df = self.spark.read.format("delta").load(format_path)
+                elif file_format.lower() == "json":
+                    test_df = self.spark.read.json(format_path)
+                elif file_format.lower() == "csv":
+                    test_df = self.spark.read.option("header", "true").csv(format_path)
+
+                # Force action to measure read time
+                row_count = test_df.count()
+                read_time = time.time() - start_time
+
+                results[file_format] = {
+                    "write_time": write_time,
+                    "read_time": read_time,
+                    "total_time": write_time + read_time,
+                    "row_count": row_count,
+                    "path": format_path
+                }
+
+                print(f"  Write time: {write_time:.2f}s")
+                print(f"  Read time: {read_time:.2f}s")
+                print(f"  Total time: {write_time + read_time:.2f}s")
+
+            except Exception as e:
+                print(f"  ERROR with {file_format}: {e}")
+                results[file_format] = {"error": str(e)}
+
+        # Find best performing format
+        valid_results = {k: v for k, v in results.items() if "error" not in v}
+        if valid_results:
+            best_format = min(valid_results.keys(),
+                            key=lambda x: valid_results[x]["total_time"])
+            print(f"\n🏆 Best performing format: {best_format.upper()}")
+            print(f"   Total time: {valid_results[best_format]['total_time']:.2f}s")
+
+        return results
+
     def demonstrate_writing_strategies(self, df):
         """Demonstrate different writing strategies for various scenarios"""
         print("=== Writing Strategy Demonstrations ===")
@@ -407,7 +494,7 @@ class SparkAdvancedWriter:
 
 # Example usage and best practices
 if __name__ == "__main__":
-    writer = SparkAdvancedWriter()
+    writer = SparkAdvancedWritingStrategies()
 
     # Create sample data
     data = [
