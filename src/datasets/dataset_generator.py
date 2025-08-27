@@ -45,6 +45,12 @@ class DatasetGenerator:
 
         for i in range(num_records):
             date = base_date + timedelta(days=random.randint(0, 730))  # 2 years range
+
+            # Calculate customer range safely without using min()
+            max_customer_id = 1000
+            if num_records // 10 > 0 and num_records // 10 < 1000:
+                max_customer_id = num_records // 10
+
             data.append((
                 i,
                 all_categories[i],
@@ -53,7 +59,7 @@ class DatasetGenerator:
                 random.randint(10, 10000),  # sales amount
                 date.strftime("%Y-%m-%d"),
                 random.choice(statuses),
-                f"customer_{random.randint(1, min(1000, num_records//10))}",  # customer churn
+                f"customer_{random.randint(1, max_customer_id)}",  # customer churn
                 random.randint(1, 100)  # quantity
             ))
 
@@ -87,9 +93,12 @@ class DatasetGenerator:
         base_date = datetime(2023, 1, 1)
 
         for i in range(num_records):
+            max_account_id = 10000 if num_records // 5 == 0 else num_records // 5
+            max_account_id = 10000 if max_account_id > 10000 else max_account_id
+
             data.append((
                 i,
-                f"account_{random.randint(1, min(10000, num_records//5))}",
+                f"account_{random.randint(1, max_account_id)}",
                 random.choice(account_types),
                 random.choice(transaction_types),
                 round(random.uniform(1.0, 50000.0), 2),
@@ -464,7 +473,7 @@ class DatasetGenerator:
             .join(store_df.select("store_id", "store_type", "region").withColumnRenamed("region", "store_region"), "store_id", "left") \
             .withColumn("profit_margin",
                        when(col("list_price").isNotNull() & col("amount").isNotNull(),
-                            col("amount") - (col("list_price") * col("quantity") * 0.7))
+                            col("amount") - (col("list_price") * col("quantity") * col("discount_rate")))
                        .otherwise(0)) \
             .withColumn("year", year(col("transaction_date"))) \
             .withColumn("month", month(col("transaction_date"))) \

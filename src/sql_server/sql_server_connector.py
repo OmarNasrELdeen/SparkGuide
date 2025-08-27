@@ -10,17 +10,41 @@ import configparser
 import time
 
 class SQLServerConfig:
-    def __init__(self, config_file="sql_server_config.ini"):
+    def __init__(self, config_file=None):
         """Initialize SQL Server configuration"""
+        if config_file is None:
+            # Get the project root directory (two levels up from this file)
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            project_root = os.path.dirname(os.path.dirname(current_dir))
+            config_file = os.path.join(project_root, "sql_server_config.ini")
+
         self.config_file = config_file
         self.config = configparser.ConfigParser()
         self.load_config()
 
     def load_config(self):
         """Load configuration from file or create default"""
+        # Strategy: First check project root, then same directory as this file
+        config_found = False
+
         if os.path.exists(self.config_file):
+            # Primary location: project root
             self.config.read(self.config_file)
+            config_found = True
+            print(f"✅ Config loaded from project root: {self.config_file}")
         else:
+            # Fallback: same directory as this connector file
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            fallback_config = os.path.join(current_dir, "sql_server_config.ini")
+
+            if os.path.exists(fallback_config):
+                self.config_file = fallback_config  # Update the config file path
+                self.config.read(fallback_config)
+                config_found = True
+                print(f"✅ Config loaded from connector directory: {fallback_config}")
+
+        if not config_found:
+            print(f"⚠️  Config file not found in either location. Creating default at: {self.config_file}")
             self.create_default_config()
 
     def create_default_config(self):
@@ -79,7 +103,7 @@ class SQLServerConfig:
         }
 
 class SQLServerConnector:
-    def __init__(self, config_file="sql_server_config.ini"):
+    def __init__(self, config_file=None):
         """Initialize SQL Server connector"""
         self.config = SQLServerConfig(config_file)
         self.spark = None
@@ -266,7 +290,6 @@ class SQLServerConnector:
             filter_query = f"""
                 SELECT * FROM {table_name}
                 WHERE sales > 5000 AND status = 'completed'
-                ORDER BY sales DESC
             """
             filter_result, filter_time = self.execute_sql_query(filter_query, "Filtering query")
             results['filtering'] = {'time': filter_time, 'success': filter_result is not None}

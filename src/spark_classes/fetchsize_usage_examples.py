@@ -3,7 +3,7 @@ FetchSize Usage Examples for Spark JDBC Connections
 This module demonstrates proper fetchSize usage and optimization strategies
 """
 
-from spark_sql_connection import SparkJDBCConnector
+from .spark_sql_connection import SparkJDBCConnector
 
 class FetchSizeOptimizer:
     def __init__(self, app_name="FetchSizeOptimizer"):

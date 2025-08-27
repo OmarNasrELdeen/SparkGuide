@@ -127,9 +127,15 @@ class TestAllSparkClasses:
                 'windowed': perf_windowed
             }
 
-            # Test optimize_multi_level_grouping
+            # Test optimize_multi_level_grouping - first add product_type column
             def test_multi_level():
-                return grouper.optimize_multi_level_grouping(df)
+                # Add the missing product_type column that the function expects
+                enhanced_df = df.withColumn("product_type",
+                                          when(col("category") == "Electronics", "Tech")
+                                          .when(col("category") == "Clothing", "Fashion")
+                                          .otherwise("Other"))
+                rollup_result, cube_result = grouper.optimize_multi_level_grouping(enhanced_df)
+                return rollup_result  # Return only the first result for benchmarking
 
             perf = performance_analyzer.benchmark_transformations(
                 df, {"multi_level_grouping": lambda d: test_multi_level()}
@@ -145,31 +151,60 @@ class TestAllSparkClasses:
             )
             volume_results['skewed_grouping'] = perf
 
-            # Test advanced_aggregation_functions
+            # Test advanced_aggregation_functions - fix tuple issue
             def test_advanced_agg():
-                return grouper.advanced_aggregation_functions(df)
+                list_agg, stats_agg, percentile_agg = grouper.advanced_aggregation_functions(df)
+                return list_agg  # Return only the first result for benchmarking
 
             perf = performance_analyzer.benchmark_transformations(
                 df, {"advanced_aggregations": lambda d: test_advanced_agg()}
             )
             volume_results['advanced_aggregations'] = perf
 
-            # Test optimize_grouping_for_time_series
+            # Test optimize_grouping_for_time_series - fix tuple issue
             def test_time_series():
-                return grouper.optimize_grouping_for_time_series(df, "date")
+                daily_agg, weekly_agg, monthly_agg = grouper.optimize_grouping_for_time_series(df, "date")
+                return daily_agg  # Return only the first result for benchmarking
 
             perf = performance_analyzer.benchmark_transformations(
                 df, {"time_series_grouping": lambda d: test_time_series()}
             )
             volume_results['time_series_grouping'] = perf
 
+            # Test memory_efficient_grouping
+            def test_memory_efficient():
+                approx_agg, sample_agg = grouper.memory_efficient_grouping(df)
+                return approx_agg  # Return only the first result for benchmarking
+
+            perf = performance_analyzer.benchmark_transformations(
+                df, {"memory_efficient_grouping": lambda d: test_memory_efficient()}
+            )
+            volume_results['memory_efficient_grouping'] = perf
+
+            # Test partition_aware_grouping
+            def test_partition_aware():
+                partition_grouped, non_partition_grouped = grouper.partition_aware_grouping(df, "region")
+                return partition_grouped  # Return only the first result for benchmarking
+
+            perf = performance_analyzer.benchmark_transformations(
+                df, {"partition_aware_grouping": lambda d: test_partition_aware()}
+            )
+            volume_results['partition_aware_grouping'] = perf
+
             results[volume] = volume_results
 
         # Assert all tests passed
         for volume, volume_results in results.items():
             for function_name, perf_results in volume_results.items():
-                for operation, metrics in perf_results.items():
-                    assert metrics['success'], f"{function_name} failed for {volume} dataset"
+                if isinstance(perf_results, dict) and 'grouped' in perf_results:
+                    # Handle group_vs_window which has nested structure
+                    for sub_name, sub_results in perf_results.items():
+                        for operation, metrics in sub_results.items():
+                            assert metrics['success'], f"{function_name}.{sub_name} failed for {volume} dataset"
+                else:
+                    # Handle regular functions
+                    for operation, metrics in perf_results.items():
+                        assert metrics['success'], f"{function_name} failed for {volume} dataset"
 
         return results
 
