@@ -22,7 +22,13 @@ from performance_analysis.performance_analyzer import PerformanceAnalyzer
 class StagingToCuratedETL:
     def __init__(self, spark_session=None, sql_connector=None):
         """Initialize staging-to-curated ETL pipeline"""
-        self.spark = spark_session or self.create_optimized_spark_session()
+        # Validate the provided spark_session; fallback to active or new session if invalid
+        if spark_session is not None and hasattr(spark_session, "createDataFrame"):
+            self.spark = spark_session
+        else:
+            active = SparkSession.getActiveSession()
+            self.spark = active or self.create_optimized_spark_session()
+
         self.sql_connector = sql_connector or SQLServerConnector()
         self.sql_connector.spark = self.spark
         self.performance_analyzer = PerformanceAnalyzer(self.spark)

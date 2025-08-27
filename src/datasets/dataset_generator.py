@@ -14,13 +14,18 @@ import json
 class DatasetGenerator:
     def __init__(self, spark_session=None):
         """Initialize dataset generator with Spark session"""
-        if spark_session:
+        # Validate provided session; fallback if invalid
+        if spark_session is not None and hasattr(spark_session, "createDataFrame"):
             self.spark = spark_session
         else:
-            self.spark = SparkSession.builder \
-                .appName("DatasetGenerator") \
-                .config("spark.sql.adaptive.enabled", "true") \
-                .getOrCreate()
+            active = SparkSession.getActiveSession()
+            if active is not None:
+                self.spark = active
+            else:
+                self.spark = SparkSession.builder \
+                    .appName("DatasetGenerator") \
+                    .config("spark.sql.adaptive.enabled", "true") \
+                    .getOrCreate()
 
     def generate_sales_data(self, num_records, skew_factor=0.2):
         """Generate sales data with configurable volume and skew"""
@@ -469,12 +474,13 @@ class DatasetGenerator:
         # Join transactions with dimensions
         sales_fact = transaction_df \
             .join(customer_df.select("customer_id", "region", "customer_type"), "customer_id", "left") \
-            .join(product_df.select("product_id", "category", "brand", "list_price"), "product_id", "left") \
+            .join(product_df.select("product_id", "category", "brand", "list_price", "cost_price"), "product_id", "left") \
             .join(store_df.select("store_id", "store_type", "region").withColumnRenamed("region", "store_region"), "store_id", "left") \
-            .withColumn("profit_margin",
-                       when(col("list_price").isNotNull() & col("amount").isNotNull(),
-                            col("amount") - (col("list_price") * col("quantity") * col("discount_rate")))
-                       .otherwise(0)) \
+            .withColumn("revenue", coalesce(col("amount"), lit(0.0))) \
+            .withColumn("cost", coalesce(col("cost_price"), lit(0.0)) * coalesce(col("quantity"), lit(0))) \
+            .withColumn("profit", col("revenue") - col("cost")) \
+            .withColumn("profit_margin_pct",
+                       when(col("revenue") > 0, round((col("profit") / col("revenue")) * 100, 2)).otherwise(lit(0.0))) \
             .withColumn("year", year(col("transaction_date"))) \
             .withColumn("month", month(col("transaction_date"))) \
             .withColumn("quarter", quarter(col("transaction_date")))

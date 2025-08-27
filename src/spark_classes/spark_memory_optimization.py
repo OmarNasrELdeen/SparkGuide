@@ -7,6 +7,7 @@ from pyspark.sql import SparkSession
 from pyspark.sql.functions import *
 from pyspark.sql.types import *
 from pyspark import StorageLevel
+import psutil
 
 class SparkMemoryOptimizer:
     def __init__(self, app_name="SparkMemoryOptimizer"):
@@ -63,9 +64,13 @@ class SparkMemoryOptimizer:
         memory_disk_df = df.persist(StorageLevel.MEMORY_AND_DISK)
         print("MEMORY_AND_DISK: Balanced performance and fault tolerance")
 
-        # Strategy 3: Serialized memory caching (memory efficient)
-        memory_ser_df = df.persist(StorageLevel.MEMORY_ONLY_SER)
-        print("MEMORY_ONLY_SER: More memory efficient but slower serialization")
+        # Strategy 3: Alternative serialized/off-heap caching (version-safe)
+        try:
+            ser_level = StorageLevel.MEMORY_ONLY_SER  # Not available in some PySpark builds
+        except AttributeError:
+            ser_level = getattr(StorageLevel, 'OFF_HEAP', StorageLevel.MEMORY_ONLY)
+        memory_ser_df = df.persist(ser_level)
+        print(f"{ser_level}: Memory-efficient alternative (may require off-heap enabled)")
 
         # Strategy 4: Disk-only caching (memory constrained environments)
         disk_only_df = df.persist(StorageLevel.DISK_ONLY)
@@ -270,6 +275,51 @@ class SparkMemoryOptimizer:
                     print(f"Iteration {i}, count: {result}")
 
         return safe_cache_operation, cleanup_cached_dataframes, limited_lifetime_operation
+
+    def optimize_partitioning_for_memory(self, df):
+        """Adjust partitions to reduce memory pressure while preserving data."""
+        current_parts = df.rdd.getNumPartitions()
+        # Simple heuristic: reduce partitions by half but keep at least 2
+        target_parts = max(2, current_parts // 2)
+        if target_parts < current_parts:
+            optimized = df.coalesce(target_parts)
+        else:
+            # If increasing needed (unlikely here), repartition by a stable column
+            if "category" in df.columns:
+                optimized = df.repartition(target_parts, col("category"))
+            elif "id" in df.columns:
+                optimized = df.repartition(target_parts, col("id"))
+            else:
+                optimized = df.repartition(target_parts)
+        # Touch an action lightly to materialize lineage changes without collecting all data
+        _ = optimized.rdd.getNumPartitions()
+        return optimized
+
+    def memory_monitoring_functions(self, df):
+        """Measure memory before/after a cached computation and return metrics."""
+        process = psutil.Process()
+        initial = process.memory_info()
+        initial_mem = {
+            'rss_mb': round(initial.rss / (1024*1024), 2),
+            'vms_mb': round(initial.vms / (1024*1024), 2)
+        }
+
+        # Perform a small but materializing workload
+        df.cache()
+        row_count = df.count()
+        df.unpersist()
+
+        final = process.memory_info()
+        final_mem = {
+            'rss_mb': round(final.rss / (1024*1024), 2),
+            'vms_mb': round(final.vms / (1024*1024), 2)
+        }
+
+        result = {
+            'row_count': row_count,
+            'partitions': df.rdd.getNumPartitions()
+        }
+        return result, initial_mem, final_mem
 
 # Example usage
 if __name__ == "__main__":

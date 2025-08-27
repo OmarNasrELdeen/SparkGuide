@@ -6,6 +6,7 @@ Tests performance across various Spark configurations, partitioning strategies, 
 import time
 import json
 import psutil
+import builtins
 from datetime import datetime
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import *
@@ -279,8 +280,8 @@ class AdvancedPerformanceTester:
         for operation, size_data in operation_performance.items():
             best_configs[operation] = {}
             for size, config_data in size_data.items():
-                # Find fastest configuration
-                fastest_config = min(config_data.keys(),
+                # Find fastest configuration using builtins.min to avoid shadowing
+                fastest_config = builtins.min(config_data.keys(),
                                    key=lambda k: config_data[k]['execution_time_ms'])
                 best_configs[operation][size] = fastest_config
 

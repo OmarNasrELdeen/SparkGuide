@@ -7,6 +7,7 @@ import pytest
 import time
 import sys
 import os
+import builtins
 from datetime import datetime
 
 # Add src to path for imports
@@ -430,10 +431,21 @@ class TestAllSparkClasses:
                 print(f"{config_name}: {execution_time:.2f} seconds")
 
             finally:
-                test_spark.stop()
+                # Avoid stopping the shared active session used by df
+                try:
+                    df_spark = df.sql_ctx.sparkSession if hasattr(df, 'sql_ctx') else None
+                    if df_spark is not None and test_spark is not None and test_spark.sparkContext is not None:
+                        if test_spark.sparkContext != df_spark.sparkContext:
+                            test_spark.stop()
+                    else:
+                        # If we cannot compare safely, do not stop here
+                        pass
+                except Exception:
+                    # Be conservative and keep the session alive to not break other tests
+                    pass
 
-        # Find best performing configuration
-        best_config = min(comparison_results.keys(),
+        # Find best performing configuration using builtins.min to avoid shadowing
+        best_config = builtins.min(comparison_results.keys(),
                          key=lambda k: comparison_results[k]['execution_time'])
         print(f"\nBest performing configuration: {best_config}")
 

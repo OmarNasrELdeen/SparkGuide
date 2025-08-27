@@ -8,6 +8,7 @@ This comprehensive collection of Spark modules demonstrates advanced ETL techniq
 - **`spark_sql_connection.py`** - Universal JDBC connectivity with multi-database support and advanced partitioning
 - **`spark_advanced_writing_strategies.py`** - Optimized writing patterns for bucketed, partitioned, and initial load scenarios
 - **`spark_query_optimization.py`** - Advanced query optimization and Cost-Based Optimization (CBO)
+- **`fetchsize_usage_examples.py`** - JDBC fetchSize optimization examples (FetchSizeOptimizer)
 
 ### Performance & Resource Optimization
 - **`spark_parallelism_optimization.py`** - Parallelism strategies and performance tuning

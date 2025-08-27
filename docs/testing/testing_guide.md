@@ -43,72 +43,73 @@ F:\Data_ETL\spark\
 
 ## Overview
 
-This comprehensive testing framework is designed to test every function in your Spark ETL project with different data volumes, performance analysis, and SQL Server integration. The framework has been **streamlined** to use only 3 essential test files that provide complete coverage without redundancy.
+This comprehensive testing framework is designed to test every function in your Spark ETL project with different data volumes, performance analysis, and SQL Server integration. The framework has been streamlined to use only 3 essential test files that provide complete coverage without redundancy.
 
 ### 1. Enhanced Dataset Generation (`src/datasets/`)
-- **Multiple data types**: Sales, Financial, Time Series, Nested data, Customer Master, Product Catalog
-- **Configurable volumes**: Development (10K), Staging (100K), Production-like (1M), Stress Test (5M)
-- **Data quality issues**: 15% realistic quality issues (nulls, negatives, future dates)
-- **Staging workflows**: Complete datasets for staging-to-curated ETL testing
+- Multiple data types: Sales, Financial, Time Series, Nested data, Customer Master, Product Catalog
+- Configurable volumes for ETL environments: Development (10K), Staging (100K), Production-like (1M), Stress Test (5M)
+- Data quality issues: 15% realistic quality issues (nulls, negatives, future dates)
+- Staging workflows: Complete datasets for staging-to-curated ETL testing
 
 ### 2. Organized Spark Classes (`src/spark_classes/`) - 12 Classes Total
-- **SparkGroupingStrategies**: Comprehensive grouping and aggregation optimization
-- **SparkMemoryOptimizer**: Memory management and optimization techniques
-- **SparkAdvancedTransformations**: Complex data transformations and ETL operations
-- **SparkQueryOptimizer**: Query optimization and performance tuning
-- **SparkPartitioningStrategies**: Partitioning optimization techniques
-- **SparkParallelismOptimizer**: Parallelism and task optimization
-- **SparkAdvancedWritingStrategies**: Advanced data writing strategies
-- **SparkFileFormats**: File format optimization
-- **SparkMonitoringDebugging**: Monitoring and debugging tools
-- **SparkStreamingETL**: Real-time streaming ETL
-- **SparkJDBCConnector**: Multi-database JDBC connections
-- **FetchSizeOptimizer**: JDBC fetchSize optimization
+- SparkGroupingStrategies: Comprehensive grouping and aggregation optimization
+- SparkMemoryOptimizer: Memory management and optimization techniques
+- SparkAdvancedTransformations: Complex data transformations and ETL operations
+- SparkQueryOptimizer: Query optimization and performance tuning
+- SparkPartitioningStrategies: Partitioning optimization techniques
+- SparkParallelismOptimizer: Parallelism and task optimization
+- SparkAdvancedWritingStrategies: Advanced data writing strategies
+- SparkFileFormats: File format optimization
+- SparkMonitoringDebugging: Monitoring and debugging tools
+- SparkStreamingETL: Real-time streaming ETL
+- SparkJDBCConnector: Multi-database JDBC connections
+- FetchSizeOptimizer: JDBC fetchSize optimization
 
 ### 3. SQL Server Integration (`src/sql_server/`)
-- **Configuration management**: Centralized SQL Server configuration
-- **Performance monitoring**: Built-in timing and throughput measurement
-- **Bulk operations**: Optimized read/write operations for large datasets
-- **ETL workflows**: Staging-to-curated database workflows
+- Configuration management: Centralized SQL Server configuration
+- Performance monitoring: Built-in timing and throughput measurement
+- Bulk operations: Optimized read/write operations for large datasets
+- ETL workflows: Staging-to-curated database workflows
+- Note: SparkJDBCConnector auto-downloads drivers via spark.jars.packages; SQLServerConnector expects a local mssql-jdbc JAR.
 
 ### 4. Streamlined Testing Framework (`src/tests/`) - 3 Essential Files
 
-#### 🎯 **`master_test_suite.py`** (Master Testing Framework)
-- **Consolidated testing class**: `MasterSparkETLTester` 
-- **Volume-based testing**: Tests functions with different data volumes
-- **Performance measurement**: Execution time, memory usage, throughput
-- **All 12 Spark classes**: Comprehensive testing of every function
-- **SQL Server integration**: Database read/write testing
-- **ETL workflow integration**: Complete pipeline testing
+#### 🎯 `master_test_suite.py` (Master Testing Framework)
+- Consolidated testing class: MasterSparkETLTester
+- Volume-based testing: Tests functions with different data volumes
+- Performance measurement: Execution time, memory usage, throughput
+- All 12 Spark classes: Comprehensive testing of every function
+- SQL Server integration: Database read/write testing
+- ETL workflow integration: Complete pipeline testing
 
-#### 🔄 **`staging_to_curated_etl_tester.py`** (Specialized ETL Testing)
-- **Complete ETL pipeline**: Staging-to-curated data workflows
-- **Data quality analysis**: Comprehensive quality metrics and reporting
-- **Data cleaning**: Configurable cleaning rules and business logic
-- **Complex joins**: Multi-table joins and aggregations
-- **Performance across configurations**: 5 different ETL configurations tested
-- **SQL Server workflows**: Database staging and curated table operations
+#### 🔄 `staging_to_curated_etl_tester.py` (Specialized ETL Testing)
+- Complete ETL pipeline: Staging-to-curated data workflows
+- Data quality analysis: Comprehensive quality metrics and reporting
+- Data cleaning: Configurable cleaning rules and business logic
+- Complex joins: Multi-table joins and aggregations
+- Performance across configurations: 5 different ETL configurations tested
+- SQL Server workflows: Database staging and curated table operations
 
-#### 🧪 **`test_all_spark_classes.py`** (Pytest-Compatible Testing)
-- **Pytest fixtures**: Professional pytest-style testing
-- **All Spark classes**: Comprehensive validation of every class and method
-- **Configuration comparison**: Advanced performance testing across configurations
-- **Enhanced dataset testing**: Validation of new dataset generation capabilities
-- **Integration testing**: End-to-end testing with SQL Server
+#### 🧪 `test_all_spark_classes.py` (Pytest-Compatible Testing)
+- Pytest fixtures: Professional pytest-style testing
+- All Spark classes: Comprehensive validation of every class and method
+- Configuration comparison: Advanced performance testing across configurations
+- Enhanced dataset testing: Validation of new dataset generation capabilities
+- Integration testing: End-to-end testing with SQL Server
 
 ### 5. Performance Analysis (`src/performance_analysis/`)
-- **Configuration testing**: 6 different Spark configurations
-- **Execution plan analysis**: Identify optimization opportunities
-- **Memory profiling**: Track memory usage patterns
-- **Scalability analysis**: Understand how operations scale
-- **Visualization**: Generate performance charts and reports
+- Configuration testing: 6 different Spark configurations
+- Execution plan analysis: Identify optimization opportunities
+- Memory profiling: Track memory usage patterns
+- Scalability analysis: Understand how operations scale
+- Visualization: Generate performance charts and reports
 
 ## Quick Start Guide
 
 ### 1. Setup Requirements
 ```bash
 pip install pyspark pytest psutil matplotlib pandas configparser
-# Download SQL Server JDBC driver (mssql-jdbc-12.4.2.jre8.jar)
+# Download SQL Server JDBC driver (mssql-jdbc-12.4.2.jre8.jar) if using SQLServerConnector
 ```
 
 ### 2. Configure SQL Server
@@ -131,6 +132,7 @@ python run_comprehensive_tests.py --mode spark-classes     # Test all 12 Spark c
 python run_comprehensive_tests.py --mode performance       # Configuration testing
 python run_comprehensive_tests.py --mode etl-workflow      # ETL pipeline testing
 python run_comprehensive_tests.py --mode sql-integration   # SQL Server testing
+python run_comprehensive_tests.py --mode pytest            # Run pytest suite via runner
 
 # 📊 Different environments
 python run_comprehensive_tests.py --mode all --environment staging
@@ -160,7 +162,7 @@ python -c "from src.tests.staging_to_curated_etl_tester import StagingToCuratedE
 ## Testing Framework Details
 
 ### Master Test Suite (`master_test_suite.py`)
-**Primary testing framework that consolidates all functionality:**
+Primary testing framework that consolidates all functionality:
 
 ```python
 from src.tests.master_test_suite import MasterSparkETLTester
@@ -185,7 +187,7 @@ tester.run_all_tests()
 ```
 
 ### ETL Workflow Testing (`staging_to_curated_etl_tester.py`)
-**Specialized testing for complete ETL pipelines:**
+Specialized testing for complete ETL pipelines:
 
 ```python
 from src.tests.staging_to_curated_etl_tester import StagingToCuratedETL
@@ -200,7 +202,7 @@ results, report = etl.run_comprehensive_etl_with_performance_analysis(
 ```
 
 ### Pytest Testing (`test_all_spark_classes.py`)
-**Professional pytest-style testing:**
+Professional pytest-style testing:
 
 ```bash
 # Run all pytest tests
@@ -215,49 +217,49 @@ pytest src/tests/test_all_spark_classes.py::TestAllSparkClasses::test_advanced_p
 ## Testing Scenarios
 
 ### 1. Function Testing with Multiple Volumes
-Each function is tested with:
-- **Development dataset** (10,000 records): Quick validation testing
-- **Staging dataset** (100,000 records): Integration testing
-- **Production-like dataset** (1,000,000 records): Performance testing
-- **Stress test dataset** (5,000,000 records): Stress testing
+Each function is tested with dataset sizes defined in `DatasetGenerator.get_dataset_configs()`:
+- Small (1,000 records): Quick validation testing
+- Medium (50,000 records): Integration/performance testing
+- Large (500,000 records): Stress testing
+- XLarge (2,000,000 records): Scalability testing (optional where applicable)
 
 ### 2. Performance Metrics Measured
-- **Execution time**: Milliseconds for operation completion
-- **Memory usage**: Memory delta during operation
-- **Throughput**: Records processed per second
-- **SQL Server I/O**: Read/write performance to database
-- **Configuration comparison**: Best performing Spark settings
+- Execution time: Milliseconds for operation completion
+- Memory usage: Memory delta during operation
+- Throughput: Records processed per second
+- SQL Server I/O: Read/write performance to database
+- Configuration comparison: Best performing Spark settings
 
 ### 3. Spark Configuration Testing
 The framework tests 6 different Spark configurations:
-- **Default**: Baseline configuration
-- **Adaptive Optimized**: Adaptive query execution enabled
-- **Memory Optimized**: Memory-intensive workload optimization
-- **Large Data Optimized**: Very large dataset optimization
-- **Join Optimized**: Complex join and skew handling
-- **I/O Optimized**: File operations and compression optimization
+- Default: Baseline configuration
+- Adaptive Optimized: Adaptive query execution enabled
+- Memory Optimized: Memory-intensive workload optimization
+- Large Data Optimized: Very large dataset optimization
+- Join Optimized: Complex join and skew handling
+- I/O Optimized: File operations and compression optimization
 
 ### 4. ETL Workflow Testing
-- **Staging data generation**: Realistic datasets with quality issues
-- **Data quality analysis**: Comprehensive quality metrics
-- **Data cleaning**: Configurable cleaning rules
-- **Complex joins**: Multi-table dimensional modeling
-- **Performance measurement**: End-to-end pipeline performance
+- Staging data generation: Realistic datasets with quality issues
+- Data quality analysis: Comprehensive quality metrics
+- Data cleaning: Configurable cleaning rules
+- Complex joins: Multi-table dimensional modeling
+- Performance measurement: End-to-end pipeline performance
 
 ### 5. SQL Server Integration Testing
-- **Write performance**: Bulk insert operations with different batch sizes
-- **Read performance**: Parallel reading with configurable partitions
-- **Query performance**: Complex aggregations and filtering
-- **Connection optimization**: Connection pooling and timeout settings
+- Write performance: Bulk insert operations with different batch sizes
+- Read performance: Parallel reading with configurable partitions
+- Query performance: Complex aggregations and filtering
+- Connection optimization: Connection pooling and timeout settings
 
 ## Generated Reports
 
 ### 1. Performance Reports
 The framework generates comprehensive performance reports:
-- **Master Test Report**: Complete results for all functions tested
-- **Configuration Comparison Report**: Best performing configurations
-- **ETL Performance Report**: End-to-end pipeline analysis
-- **Scaling Analysis**: How operations scale with data size
+- Master Test Report: Complete results for all functions tested
+- Configuration Comparison Report: Best performing configurations
+- ETL Performance Report: End-to-end pipeline analysis
+- Scaling Analysis: How operations scale with data size
 
 ### 2. Report Files Generated
 - `master_test_report_YYYYMMDD_HHMMSS.json`
@@ -267,37 +269,37 @@ The framework generates comprehensive performance reports:
 ## Advanced Features
 
 ### 1. Data Quality Testing
-- **Realistic quality issues**: 15% of data contains quality problems
-- **Configurable cleaning**: Business rules for different table types
-- **Quality metrics**: Comprehensive analysis and reporting
+- Realistic quality issues: 15% of data contains quality problems
+- Configurable cleaning: Business rules for different table types
+- Quality metrics: Comprehensive analysis and reporting
 
 ### 2. Configuration Optimization
-- **Automatic testing**: All configurations tested automatically
-- **Performance comparison**: Best configuration identified per operation
-- **Recommendations**: Specific optimization suggestions
+- Automatic testing: All configurations tested automatically
+- Performance comparison: Best configuration identified per operation
+- Recommendations: Specific optimization suggestions
 
 ### 3. Scaling Analysis
-- **Linear vs superlinear**: Identifies scaling patterns
-- **Bottleneck detection**: Pinpoints performance limitations
-- **Capacity planning**: Recommendations for production sizing
+- Linear vs superlinear: Identifies scaling patterns
+- Bottleneck detection: Pinpoints performance limitations
+- Capacity planning: Recommendations for production sizing
 
 ## Best Practices for Testing
 
 ### 1. Test Execution Order
-1. **Start with spark-classes mode**: Validate all individual functions
-2. **Run performance mode**: Identify optimal configurations
-3. **Test etl-workflow**: Validate complete pipelines
-4. **Run sql-integration**: Test database operations
+1. Start with spark-classes mode: Validate all individual functions
+2. Run performance mode: Identify optimal configurations
+3. Test etl-workflow: Validate complete pipelines
+4. Run sql-integration: Test database operations
 
 ### 2. Environment Usage
-- **Development**: Quick validation and debugging
-- **Staging**: Integration testing and validation
-- **Production-like**: Performance testing and optimization
-- **Stress-test**: Capacity planning and limits testing
+- Development: Quick validation and debugging
+- Staging: Integration testing and validation
+- Production-like: Performance testing and optimization
+- Stress-test: Capacity planning and limits testing
 
 ### 3. Configuration Testing
-- **Test all configurations**: Each has different strengths
-- **Monitor memory**: Large datasets require memory optimization
-- **Review reports**: Use recommendations for production settings
+- Test all configurations: Each has different strengths
+- Monitor memory: Large datasets require memory optimization
+- Review reports: Use recommendations for production settings
 
 This streamlined testing framework provides comprehensive coverage of all Spark ETL functionality while maintaining a clean, organized structure with only the essential test files.
